@@ -31,7 +31,7 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:8000/api/login'),
+        Uri.parse('http://172.31.179.234:8000/api/login'),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -39,7 +39,8 @@ class _LoginPageState extends State<LoginPage> {
         body: {
           'email': emailController.text.trim(),
           'password': passwordController.text,
-          'device_name': 'android_mobile', // Validasi device name dari Laravel backend
+          'device_name':
+              'android_mobile', // Validasi device name dari Laravel backend
         },
       );
 
@@ -50,11 +51,14 @@ class _LoginPageState extends State<LoginPage> {
       // LOGIN BERHASIL
       if (response.statusCode == 200) {
         // 1. Ambil token dari response body Laravel
-        String token = data['token'] ?? ''; 
+        String token = data['token'] ?? '';
 
         // 2. Simpan token ke dalam SharedPreferences secara lokal di HP
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('auth_token', token); // Key ini harus sama dengan yang dibaca di dashboard.dart
+        await prefs.setString(
+          'auth_token',
+          token,
+        ); // Key ini harus sama dengan yang dibaca di dashboard.dart
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -66,28 +70,26 @@ class _LoginPageState extends State<LoginPage> {
         // REDIRECT KE DASHBOARD
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (_) => const DashboardPage(),
-          ),
+          MaterialPageRoute(builder: (_) => const DashboardPage()),
         );
       } else {
         // LOGIN GAGAL
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(data['message'] ?? 'Login Gagal, periksa kembali akun Anda.'),
+            content: Text(
+              data['message'] ?? 'Login Gagal, periksa kembali akun Anda.',
+            ),
             backgroundColor: Colors.red,
           ),
         );
       }
     } catch (e) {
+      print(
+        "Detail Error Login: $e",
+      ); // 👈 Tambahkan ini untuk cek di terminal/console
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
-    } finally {
-      setState(() => isLoading = false);
     }
   }
 
@@ -101,28 +103,19 @@ class _LoginPageState extends State<LoginPage> {
           Positioned(
             top: -100,
             right: -50,
-            child: _buildBlob(
-              300,
-              const Color(0xFFE0F2FE),
-            ),
+            child: _buildBlob(300, const Color(0xFFE0F2FE)),
           ),
 
           Positioned(
             bottom: -50,
             left: -50,
-            child: _buildBlob(
-              250,
-              const Color(0xFFF0F9FF),
-            ),
+            child: _buildBlob(250, const Color(0xFFF0F9FF)),
           ),
 
           Positioned(
             top: 200,
             left: -80,
-            child: _buildBlob(
-              200,
-              const Color(0xFFEEF2FF),
-            ),
+            child: _buildBlob(200, const Color(0xFFEEF2FF)),
           ),
 
           // CONTENT
@@ -133,7 +126,6 @@ class _LoginPageState extends State<LoginPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-
                     // LOGO
                     Hero(
                       tag: 'logo',
@@ -178,10 +170,7 @@ class _LoginPageState extends State<LoginPage> {
 
                     const Text(
                       'Monitoring Magang Jadi Lebih Mudah',
-                      style: TextStyle(
-                        color: Colors.black54,
-                        fontSize: 16,
-                      ),
+                      style: TextStyle(color: Colors.black54, fontSize: 16),
                     ),
 
                     const SizedBox(height: 48),
@@ -190,10 +179,7 @@ class _LoginPageState extends State<LoginPage> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(35),
                       child: BackdropFilter(
-                        filter: ImageFilter.blur(
-                          sigmaX: 10,
-                          sigmaY: 10,
-                        ),
+                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                         child: Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(32),
@@ -213,14 +199,10 @@ class _LoginPageState extends State<LoginPage> {
                             ],
                           ),
                           child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-
                               // EMAIL
-                              _buildInputLabel(
-                                'Email Address',
-                              ),
+                              _buildInputLabel('Email Address'),
 
                               _buildCustomField(
                                 controller: emailController,
@@ -231,9 +213,7 @@ class _LoginPageState extends State<LoginPage> {
                               const SizedBox(height: 24),
 
                               // PASSWORD
-                              _buildInputLabel(
-                                'Password',
-                              ),
+                              _buildInputLabel('Password'),
 
                               _buildCustomField(
                                 controller: passwordController,
@@ -243,23 +223,20 @@ class _LoginPageState extends State<LoginPage> {
                                 obscure: obscurePassword,
                                 onToggle: () {
                                   setState(() {
-                                    obscurePassword =
-                                        !obscurePassword;
+                                    obscurePassword = !obscurePassword;
                                   });
                                 },
                               ),
 
                               Align(
-                                alignment:
-                                    Alignment.centerRight,
+                                alignment: Alignment.centerRight,
                                 child: TextButton(
                                   onPressed: () {},
                                   child: Text(
                                     'Lupa Sandi?',
                                     style: TextStyle(
                                       color: primaryColor,
-                                      fontWeight:
-                                          FontWeight.bold,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 ),
@@ -300,18 +277,10 @@ class _LoginPageState extends State<LoginPage> {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
       child: BackdropFilter(
-        filter: ImageFilter.blur(
-          sigmaX: 50,
-          sigmaY: 50,
-        ),
-        child: Container(
-          color: Colors.transparent,
-        ),
+        filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+        child: Container(color: Colors.transparent),
       ),
     );
   }
@@ -319,10 +288,7 @@ class _LoginPageState extends State<LoginPage> {
   // LABEL
   Widget _buildInputLabel(String label) {
     return Padding(
-      padding: const EdgeInsets.only(
-        left: 4,
-        bottom: 10,
-      ),
+      padding: const EdgeInsets.only(left: 4, bottom: 10),
       child: Text(
         label,
         style: TextStyle(
@@ -358,22 +324,13 @@ class _LoginPageState extends State<LoginPage> {
       child: TextField(
         controller: controller,
         obscureText: obscure,
-        style: TextStyle(
-          color: textDark,
-          fontWeight: FontWeight.w600,
-        ),
+        style: TextStyle(color: textDark, fontWeight: FontWeight.w600),
         decoration: InputDecoration(
-          prefixIcon: Icon(
-            icon,
-            color: primaryColor,
-            size: 22,
-          ),
+          prefixIcon: Icon(icon, color: primaryColor, size: 22),
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(
-                    obscure
-                        ? Icons.visibility_off
-                        : Icons.visibility,
+                    obscure ? Icons.visibility_off : Icons.visibility,
                     color: Colors.grey,
                   ),
                   onPressed: onToggle,
@@ -388,9 +345,7 @@ class _LoginPageState extends State<LoginPage> {
             borderRadius: BorderRadius.circular(18),
             borderSide: BorderSide.none,
           ),
-          contentPadding: const EdgeInsets.symmetric(
-            vertical: 20,
-          ),
+          contentPadding: const EdgeInsets.symmetric(vertical: 20),
         ),
       ),
     );
@@ -404,10 +359,7 @@ class _LoginPageState extends State<LoginPage> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         gradient: LinearGradient(
-          colors: [
-            secondaryColor,
-            primaryColor,
-          ],
+          colors: [secondaryColor, primaryColor],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -429,9 +381,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
         child: isLoading
-            ? const CircularProgressIndicator(
-                color: Colors.white,
-              )
+            ? const CircularProgressIndicator(color: Colors.white)
             : const Text(
                 'MASUK KE DASHBOARD',
                 style: TextStyle(
