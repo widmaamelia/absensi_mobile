@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:ui';
 
-import 'package:absensi_mobile/screen/dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart'; // 👈 Mengimpor shared_preferences untuk simpan token
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../config/api_config.dart';
+import 'dashboard.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,33 +16,47 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+
+  // =========================================
+  // CONTROLLER
+  // =========================================
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
+  // =========================================
+  // STATE
+  // =========================================
   bool obscurePassword = true;
   bool isLoading = false;
 
-  // WARNA
+  // =========================================
+  // COLORS
+  // =========================================
   final Color primaryColor = const Color(0xFF007AFF);
   final Color secondaryColor = const Color(0xFF00D2FF);
   final Color textDark = const Color(0xFF1D1D1F);
 
+  // =========================================
   // LOGIN FUNCTION
+  // =========================================
   Future<void> login() async {
-    setState(() => isLoading = true);
+
+    setState(() {
+      isLoading = true;
+    });
 
     try {
+
       final response = await http.post(
-        Uri.parse('http://172.31.179.234:8000/api/login'),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
+
+        Uri.parse(ApiConfig.login),
+
+        headers: ApiConfig.formHeaders(),
+
         body: {
           'email': emailController.text.trim(),
           'password': passwordController.text,
-          'device_name':
-              'android_mobile', // Validasi device name dari Laravel backend
+          'device_name': 'android_mobile',
         },
       );
 
@@ -48,103 +64,201 @@ class _LoginPageState extends State<LoginPage> {
 
       if (!mounted) return;
 
-      // LOGIN BERHASIL
+      // =========================================
+      // LOGIN SUCCESS
+      // =========================================
       if (response.statusCode == 200) {
-        // 1. Ambil token dari response body Laravel
-        String token = data['token'] ?? '';
 
-        // 2. Simpan token ke dalam SharedPreferences secara lokal di HP
-        final prefs = await SharedPreferences.getInstance();
+        final token = data['token'] ?? '';
+
+        final prefs =
+            await SharedPreferences.getInstance();
+
+        // SAVE TOKEN
         await prefs.setString(
           'auth_token',
           token,
-        ); // Key ini harus sama dengan yang dibaca di dashboard.dart
+        );
+
+        // SAVE USER NAME
+        if (data['user'] != null) {
+
+          await prefs.setString(
+            'user_name',
+            data['user']['name'] ?? '',
+          );
+        }
 
         ScaffoldMessenger.of(context).showSnackBar(
+
           SnackBar(
-            content: Text(data['message'] ?? 'Login Berhasil'),
+            content: Text(
+              data['message'] ??
+                  'Login Berhasil',
+            ),
+
             backgroundColor: Colors.green,
           ),
         );
 
-        // REDIRECT KE DASHBOARD
+        // NAVIGATE TO DASHBOARD
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const DashboardPage()),
+
+          MaterialPageRoute(
+            builder: (_) =>
+                const DashboardPage(),
+          ),
         );
+
       } else {
-        // LOGIN GAGAL
+
+        // =========================================
+        // LOGIN FAILED
+        // =========================================
         ScaffoldMessenger.of(context).showSnackBar(
+
           SnackBar(
             content: Text(
-              data['message'] ?? 'Login Gagal, periksa kembali akun Anda.',
+              data['message'] ??
+                  'Login gagal.',
             ),
+
             backgroundColor: Colors.red,
           ),
         );
       }
+
     } catch (e) {
-      print(
-        "Detail Error Login: $e",
-      ); // 👈 Tambahkan ini untuk cek di terminal/console
+
+      debugPrint('LOGIN ERROR: $e');
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+
+        SnackBar(
+          content: Text(
+            'Error: $e',
+          ),
+
+          backgroundColor: Colors.red,
+        ),
       );
+
+    } finally {
+
+      if (mounted) {
+
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
+  // =========================================
+  // BUILD
+  // =========================================
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
+
       backgroundColor: Colors.white,
+
       body: Stack(
         children: [
+
+          // =========================================
           // BACKGROUND
+          // =========================================
           Positioned(
             top: -100,
             right: -50,
-            child: _buildBlob(300, const Color(0xFFE0F2FE)),
+
+            child: _buildBlob(
+              300,
+              const Color(0xFFE0F2FE),
+            ),
           ),
 
           Positioned(
             bottom: -50,
             left: -50,
-            child: _buildBlob(250, const Color(0xFFF0F9FF)),
+
+            child: _buildBlob(
+              250,
+              const Color(0xFFF0F9FF),
+            ),
           ),
 
           Positioned(
             top: 200,
             left: -80,
-            child: _buildBlob(200, const Color(0xFFEEF2FF)),
+
+            child: _buildBlob(
+              200,
+              const Color(0xFFEEF2FF),
+            ),
           ),
 
+          // =========================================
           // CONTENT
+          // =========================================
           SafeArea(
+
             child: Center(
+
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+
+                padding:
+                    const EdgeInsets.symmetric(
+                  horizontal: 24,
+                ),
+
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+
+                  mainAxisAlignment:
+                      MainAxisAlignment.center,
+
                   children: [
+
+                    // =========================================
                     // LOGO
+                    // =========================================
                     Hero(
+
                       tag: 'logo',
+
                       child: Container(
+
                         height: 110,
                         width: 110,
+
                         decoration: BoxDecoration(
+
                           color: Colors.white,
+
                           shape: BoxShape.circle,
+
                           boxShadow: [
+
                             BoxShadow(
-                              color: primaryColor.withOpacity(0.15),
+                              color: primaryColor
+                                  .withOpacity(0.15),
+
                               blurRadius: 30,
-                              offset: const Offset(0, 10),
+
+                              offset:
+                                  const Offset(0, 10),
                             ),
                           ],
                         ),
+
                         child: Padding(
-                          padding: const EdgeInsets.all(20),
+
+                          padding:
+                              const EdgeInsets.all(20),
+
                           child: Image.asset(
                             'assets/Logo Mediatama.png',
                             fit: BoxFit.contain,
@@ -155,9 +269,13 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 24),
 
+                    // =========================================
                     // TITLE
+                    // =========================================
                     Text(
+
                       'InternTrack',
+
                       style: TextStyle(
                         fontSize: 40,
                         fontWeight: FontWeight.w900,
@@ -169,74 +287,142 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 8),
 
                     const Text(
+
                       'Monitoring Magang Jadi Lebih Mudah',
-                      style: TextStyle(color: Colors.black54, fontSize: 16),
+
+                      style: TextStyle(
+                        color: Colors.black54,
+                        fontSize: 16,
+                      ),
                     ),
 
                     const SizedBox(height: 48),
 
+                    // =========================================
                     // LOGIN CARD
+                    // =========================================
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(35),
+
+                      borderRadius:
+                          BorderRadius.circular(35),
+
                       child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+
+                        filter: ImageFilter.blur(
+                          sigmaX: 10,
+                          sigmaY: 10,
+                        ),
+
                         child: Container(
+
                           width: double.infinity,
-                          padding: const EdgeInsets.all(32),
+
+                          padding:
+                              const EdgeInsets.all(32),
+
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.7),
-                            borderRadius: BorderRadius.circular(35),
+
+                            color: Colors.white
+                                .withOpacity(0.7),
+
+                            borderRadius:
+                                BorderRadius.circular(35),
+
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.5),
+                              color: Colors.white
+                                  .withOpacity(0.5),
+
                               width: 1.5,
                             ),
+
                             boxShadow: [
+
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.03),
+                                color: Colors.black
+                                    .withOpacity(0.03),
+
                                 blurRadius: 40,
-                                offset: const Offset(0, 20),
+
+                                offset:
+                                    const Offset(0, 20),
                               ),
                             ],
                           ),
+
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+
+                            crossAxisAlignment:
+                                CrossAxisAlignment.start,
+
                             children: [
+
                               // EMAIL
-                              _buildInputLabel('Email Address'),
+                              _buildInputLabel(
+                                'Email Address',
+                              ),
 
                               _buildCustomField(
-                                controller: emailController,
-                                hint: 'nama@email.com',
-                                icon: Icons.alternate_email_rounded,
+                                controller:
+                                    emailController,
+
+                                hint:
+                                    'nama@email.com',
+
+                                icon:
+                                    Icons.alternate_email_rounded,
                               ),
 
                               const SizedBox(height: 24),
 
                               // PASSWORD
-                              _buildInputLabel('Password'),
+                              _buildInputLabel(
+                                'Password',
+                              ),
 
                               _buildCustomField(
-                                controller: passwordController,
+
+                                controller:
+                                    passwordController,
+
                                 hint: '••••••••',
-                                icon: Icons.lock_person_outlined,
+
+                                icon:
+                                    Icons.lock_person_outlined,
+
                                 isPassword: true,
-                                obscure: obscurePassword,
+
+                                obscure:
+                                    obscurePassword,
+
                                 onToggle: () {
+
                                   setState(() {
-                                    obscurePassword = !obscurePassword;
+
+                                    obscurePassword =
+                                        !obscurePassword;
                                   });
                                 },
                               ),
 
                               Align(
-                                alignment: Alignment.centerRight,
+
+                                alignment:
+                                    Alignment.centerRight,
+
                                 child: TextButton(
+
                                   onPressed: () {},
+
                                   child: Text(
+
                                     'Lupa Sandi?',
+
                                     style: TextStyle(
-                                      color: primaryColor,
-                                      fontWeight: FontWeight.bold,
+                                      color:
+                                          primaryColor,
+
+                                      fontWeight:
+                                          FontWeight.bold,
                                     ),
                                   ),
                                 ),
@@ -255,7 +441,9 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 40),
 
                     const Text(
+
                       '© 2024 Mediatama System • v1.0',
+
                       style: TextStyle(
                         color: Colors.black26,
                         fontSize: 12,
@@ -272,25 +460,54 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  // =========================================
   // BACKGROUND BLOB
-  Widget _buildBlob(double size, Color color) {
+  // =========================================
+  Widget _buildBlob(
+    double size,
+    Color color,
+  ) {
+
     return Container(
+
       width: size,
       height: size,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+      ),
+
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
-        child: Container(color: Colors.transparent),
+
+        filter: ImageFilter.blur(
+          sigmaX: 50,
+          sigmaY: 50,
+        ),
+
+        child: Container(
+          color: Colors.transparent,
+        ),
       ),
     );
   }
 
-  // LABEL
+  // =========================================
+  // INPUT LABEL
+  // =========================================
   Widget _buildInputLabel(String label) {
+
     return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 10),
+
+      padding: const EdgeInsets.only(
+        left: 4,
+        bottom: 10,
+      ),
+
       child: Text(
+
         label,
+
         style: TextStyle(
           color: textDark,
           fontWeight: FontWeight.w700,
@@ -300,90 +517,171 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  // =========================================
   // CUSTOM FIELD
+  // =========================================
   Widget _buildCustomField({
+
     required TextEditingController controller,
     required String hint,
     required IconData icon,
+
     bool isPassword = false,
     bool obscure = false,
+
     VoidCallback? onToggle,
+
   }) {
+
     return Container(
+
       decoration: BoxDecoration(
+
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+
+        borderRadius:
+            BorderRadius.circular(18),
+
         boxShadow: [
+
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color:
+                Colors.black.withOpacity(0.02),
+
             blurRadius: 15,
+
             offset: const Offset(0, 5),
           ),
         ],
       ),
+
       child: TextField(
+
         controller: controller,
+
         obscureText: obscure,
-        style: TextStyle(color: textDark, fontWeight: FontWeight.w600),
+
+        style: TextStyle(
+          color: textDark,
+          fontWeight: FontWeight.w600,
+        ),
+
         decoration: InputDecoration(
-          prefixIcon: Icon(icon, color: primaryColor, size: 22),
+
+          prefixIcon: Icon(
+            icon,
+            color: primaryColor,
+            size: 22,
+          ),
+
           suffixIcon: isPassword
+
               ? IconButton(
+
                   icon: Icon(
-                    obscure ? Icons.visibility_off : Icons.visibility,
+
+                    obscure
+                        ? Icons.visibility_off
+                        : Icons.visibility,
+
                     color: Colors.grey,
                   ),
+
                   onPressed: onToggle,
                 )
+
               : null,
+
           hintText: hint,
+
           hintStyle: const TextStyle(
             color: Colors.black26,
             fontWeight: FontWeight.w400,
           ),
+
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
+
+            borderRadius:
+                BorderRadius.circular(18),
+
             borderSide: BorderSide.none,
           ),
-          contentPadding: const EdgeInsets.symmetric(vertical: 20),
+
+          contentPadding:
+              const EdgeInsets.symmetric(
+            vertical: 20,
+          ),
         ),
       ),
     );
   }
 
+  // =========================================
   // BUTTON LOGIN
+  // =========================================
   Widget _buildGradientButton() {
+
     return Container(
+
       width: double.infinity,
       height: 60,
+
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+
+        borderRadius:
+            BorderRadius.circular(20),
+
         gradient: LinearGradient(
-          colors: [secondaryColor, primaryColor],
+
+          colors: [
+            secondaryColor,
+            primaryColor,
+          ],
+
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
+
         boxShadow: [
+
           BoxShadow(
-            color: primaryColor.withOpacity(0.3),
+            color:
+                primaryColor.withOpacity(0.3),
+
             blurRadius: 20,
+
             offset: const Offset(0, 10),
           ),
         ],
       ),
+
       child: ElevatedButton(
-        onPressed: isLoading ? null : login,
+
+        onPressed:
+            isLoading ? null : login,
+
         style: ElevatedButton.styleFrom(
+
           backgroundColor: Colors.transparent,
+
           shadowColor: Colors.transparent,
+
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius:
+                BorderRadius.circular(20),
           ),
         ),
+
         child: isLoading
-            ? const CircularProgressIndicator(color: Colors.white)
+
+            ? const CircularProgressIndicator(
+                color: Colors.white,
+              )
+
             : const Text(
+
                 'MASUK KE DASHBOARD',
+
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
