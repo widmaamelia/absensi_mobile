@@ -8,7 +8,7 @@ plugins {
 android {
     namespace = "com.example.absensi_mobile"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "26.3.11579264"
+    ndkVersion = "29.0.13113456"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
