@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
+import 'detail_tugas.dart';
 
 class TugasPage extends StatefulWidget {
   const TugasPage({super.key});
@@ -20,7 +21,7 @@ class _TugasPageState extends State<TugasPage> {
   // ================================
   final Color primaryDark = const Color(0xFF0F172A);       
   final Color cardDark = const Color.fromARGB(255, 0, 30, 79);          
-  final Color bgColor = const Color(0xFFF1F8FF);         
+  final Color bgColor = const Color.fromARGB(255, 233, 244, 255);
   final Color accentBlue = const Color(0xFF3B82F6);        
   final Color accentCyan = const Color(0xFF06B6D4);      
   final Color textMuted = const Color(0xFF94A3B8);         
@@ -153,7 +154,7 @@ class _TugasPageState extends State<TugasPage> {
           style: TextStyle(
             color: primaryDark,
             fontWeight: FontWeight.w800,
-            fontSize: 18,
+            fontSize: 22,
             letterSpacing: -0.5,
           ),
         ),
@@ -165,7 +166,7 @@ class _TugasPageState extends State<TugasPage> {
           children: [
             // HEADER SECTION
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 10, 24, 20),
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
               child: _FadeInSlide(
                 delay: 0,
                 child: Column(
@@ -282,8 +283,18 @@ class _TugasPageState extends State<TugasPage> {
       }
     }
 
-    return Container(
-      padding: const EdgeInsets.all(20), 
+    
+    return InkWell( // Tambahkan InkWell di sini
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => DetailTugasPage(tugas: tugas)),
+        );
+      },
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        // ... (sisanya kodingan Container yang lama kamu)
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [cardDark, primaryDark],
@@ -495,7 +506,9 @@ class _TugasPageState extends State<TugasPage> {
           ),
         ],
       ),
+    )
     );
+    
   }
 }
 
