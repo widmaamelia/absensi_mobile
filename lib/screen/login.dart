@@ -16,7 +16,6 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-
   // =========================================
   // CONTROLLER
   // =========================================
@@ -30,29 +29,28 @@ class _LoginPageState extends State<LoginPage> {
   bool isLoading = false;
 
   // =========================================
-  // COLORS
+  // COLORS (Modern Tailwind Light Theme + Navy)
   // =========================================
-  final Color primaryColor = const Color(0xFF007AFF);
-  final Color secondaryColor = const Color(0xFF00D2FF);
-  final Color textDark = const Color(0xFF1D1D1F);
+  final Color bgLight = const Color.fromARGB(255, 236, 244, 253);     // Slate 50 (Background Sangat Terang)
+  final Color textDark = const Color(0xFF0F172A);    // Slate 900 (Navy Gelap untuk Teks)
+  final Color textMuted = const Color(0xFF64748B);   // Slate 500 (Abu-abu kebiruan)
+  
+  final Color primaryBlue = const Color(0xFF2563EB); // Blue 600 (Biru Utama)
+  final Color navyDark = const Color(0xFF1E293B);    // Slate 800 (Biru Dongker)
+  final Color inputBg = const Color(0xFFF1F5F9);     // Slate 100 (Background Input)
 
   // =========================================
-  // LOGIN FUNCTION
+  // LOGIN FUNCTION (TIDAK DISENTUH SAMA SEKALI!)
   // =========================================
   Future<void> login() async {
-
     setState(() {
       isLoading = true;
     });
 
     try {
-
       final response = await http.post(
-
         Uri.parse(ApiConfig.login),
-
         headers: ApiConfig.formHeaders(),
-
         body: {
           'email': emailController.text.trim(),
           'password': passwordController.text,
@@ -68,11 +66,8 @@ class _LoginPageState extends State<LoginPage> {
       // LOGIN SUCCESS
       // =========================================
       if (response.statusCode == 200) {
-
         final token = data['token'] ?? '';
-
-        final prefs =
-            await SharedPreferences.getInstance();
+        final prefs = await SharedPreferences.getInstance();
 
         // SAVE TOKEN
         await prefs.setString(
@@ -82,7 +77,6 @@ class _LoginPageState extends State<LoginPage> {
 
         // SAVE USER NAME
         if (data['user'] != null) {
-
           await prefs.setString(
             'user_name',
             data['user']['name'] ?? '',
@@ -90,13 +84,10 @@ class _LoginPageState extends State<LoginPage> {
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
-
           SnackBar(
             content: Text(
-              data['message'] ??
-                  'Login Berhasil',
+              data['message'] ?? 'Login Berhasil',
             ),
-
             backgroundColor: Colors.green,
           ),
         );
@@ -104,50 +95,35 @@ class _LoginPageState extends State<LoginPage> {
         // NAVIGATE TO DASHBOARD
         Navigator.pushReplacement(
           context,
-
           MaterialPageRoute(
-            builder: (_) =>
-                const DashboardPage(),
+            builder: (_) => const DashboardPage(),
           ),
         );
-
       } else {
-
         // =========================================
         // LOGIN FAILED
         // =========================================
         ScaffoldMessenger.of(context).showSnackBar(
-
           SnackBar(
             content: Text(
-              data['message'] ??
-                  'Login gagal.',
+              data['message'] ?? 'Login gagal.',
             ),
-
             backgroundColor: Colors.red,
           ),
         );
       }
-
     } catch (e) {
-
       debugPrint('LOGIN ERROR: $e');
-
       ScaffoldMessenger.of(context).showSnackBar(
-
         SnackBar(
           content: Text(
             'Error: $e',
           ),
-
           backgroundColor: Colors.red,
         ),
       );
-
     } finally {
-
       if (mounted) {
-
         setState(() {
           isLoading = false;
         });
@@ -160,294 +136,182 @@ class _LoginPageState extends State<LoginPage> {
   // =========================================
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-
-      backgroundColor: Colors.white,
-
+      backgroundColor: bgLight,
       body: Stack(
         children: [
-
           // =========================================
-          // BACKGROUND
+          // BACKGROUND BLOB EFFECTS (Sangat Halus)
           // =========================================
           Positioned(
             top: -100,
             right: -50,
-
-            child: _buildBlob(
-              300,
-              const Color(0xFFE0F2FE),
-            ),
+            child: _buildBlob(350, const Color(0xFFDBEAFE).withValues(alpha: 0.6)), // Blue 100
           ),
-
           Positioned(
-            bottom: -50,
-            left: -50,
-
-            child: _buildBlob(
-              250,
-              const Color(0xFFF0F9FF),
-            ),
-          ),
-
-          Positioned(
-            top: 200,
+            bottom: -100,
             left: -80,
-
-            child: _buildBlob(
-              200,
-              const Color(0xFFEEF2FF),
-            ),
+            child: _buildBlob(400, const Color(0xFFE0E7FF).withValues(alpha: 0.6)), // Indigo 100
           ),
 
           // =========================================
           // CONTENT
           // =========================================
           SafeArea(
-
             child: Center(
-
               child: SingleChildScrollView(
-
-                padding:
-                    const EdgeInsets.symmetric(
-                  horizontal: 24,
-                ),
-
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
-
-                  mainAxisAlignment:
-                      MainAxisAlignment.center,
-
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    // =========================================
+                    // LOGO (Animated)
+                    // =========================================
+                    _FadeInSlide(
+                      delay: 0,
+                      child: Hero(
+                        tag: 'logo',
+                        child: Container(
+                          height: 110,
+                          width: 110,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: primaryBlue.withValues(alpha: 0.15),
+                                blurRadius: 30,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Image.asset(
+                              'assets/Logo Mediatama.png', // Pastikan nama aset benar
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
 
                     // =========================================
-                    // LOGO
+                    // TITLE (Animated)
                     // =========================================
-                    Hero(
+                    _FadeInSlide(
+                      delay: 100,
+                      child: Column(
+                        children: [
+                          Text(
+                            'InternTrack',
+                            style: TextStyle(
+                              fontSize: 38,
+                              fontWeight: FontWeight.w900,
+                              color: textDark,
+                              letterSpacing: -1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Monitoring Magang Jadi Lebih Mudah',
+                            style: TextStyle(
+                              color: textMuted,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 40),
 
-                      tag: 'logo',
-
+                    // =========================================
+                    // LOGIN CARD (Animated)
+                    // =========================================
+                    _FadeInSlide(
+                      delay: 200,
                       child: Container(
-
-                        height: 110,
-                        width: 110,
-
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(32),
                         decoration: BoxDecoration(
-
                           color: Colors.white,
-
-                          shape: BoxShape.circle,
-
+                          borderRadius: BorderRadius.circular(32),
                           boxShadow: [
-
                             BoxShadow(
-                              color: primaryColor
-                                  .withOpacity(0.15),
-
-                              blurRadius: 30,
-
-                              offset:
-                                  const Offset(0, 10),
+                              color: textDark.withValues(alpha: 0.06), // Soft modern shadow
+                              blurRadius: 40,
+                              offset: const Offset(0, 15),
                             ),
                           ],
                         ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // EMAIL
+                            _buildInputLabel('Email Address'),
+                            _buildCustomField(
+                              controller: emailController,
+                              hint: 'nama@email.com',
+                              icon: Icons.alternate_email_rounded,
+                            ),
+                            const SizedBox(height: 24),
 
-                        child: Padding(
-
-                          padding:
-                              const EdgeInsets.all(20),
-
-                          child: Image.asset(
-                            'assets/Logo Mediatama.png',
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // =========================================
-                    // TITLE
-                    // =========================================
-                    Text(
-
-                      'InternTrack',
-
-                      style: TextStyle(
-                        fontSize: 40,
-                        fontWeight: FontWeight.w900,
-                        color: textDark,
-                        letterSpacing: -1.5,
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    const Text(
-
-                      'Monitoring Magang Jadi Lebih Mudah',
-
-                      style: TextStyle(
-                        color: Colors.black54,
-                        fontSize: 16,
-                      ),
-                    ),
-
-                    const SizedBox(height: 48),
-
-                    // =========================================
-                    // LOGIN CARD
-                    // =========================================
-                    ClipRRect(
-
-                      borderRadius:
-                          BorderRadius.circular(35),
-
-                      child: BackdropFilter(
-
-                        filter: ImageFilter.blur(
-                          sigmaX: 10,
-                          sigmaY: 10,
-                        ),
-
-                        child: Container(
-
-                          width: double.infinity,
-
-                          padding:
-                              const EdgeInsets.all(32),
-
-                          decoration: BoxDecoration(
-
-                            color: Colors.white
-                                .withOpacity(0.7),
-
-                            borderRadius:
-                                BorderRadius.circular(35),
-
-                            border: Border.all(
-                              color: Colors.white
-                                  .withOpacity(0.5),
-
-                              width: 1.5,
+                            // PASSWORD
+                            _buildInputLabel('Password'),
+                            _buildCustomField(
+                              controller: passwordController,
+                              hint: '••••••••',
+                              icon: Icons.lock_person_outlined,
+                              isPassword: true,
+                              obscure: obscurePassword,
+                              onToggle: () {
+                                setState(() {
+                                  obscurePassword = !obscurePassword;
+                                });
+                              },
                             ),
 
-                            boxShadow: [
-
-                              BoxShadow(
-                                color: Colors.black
-                                    .withOpacity(0.03),
-
-                                blurRadius: 40,
-
-                                offset:
-                                    const Offset(0, 20),
-                              ),
-                            ],
-                          ),
-
-                          child: Column(
-
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
-
-                            children: [
-
-                              // EMAIL
-                              _buildInputLabel(
-                                'Email Address',
-                              ),
-
-                              _buildCustomField(
-                                controller:
-                                    emailController,
-
-                                hint:
-                                    'nama@email.com',
-
-                                icon:
-                                    Icons.alternate_email_rounded,
-                              ),
-
-                              const SizedBox(height: 24),
-
-                              // PASSWORD
-                              _buildInputLabel(
-                                'Password',
-                              ),
-
-                              _buildCustomField(
-
-                                controller:
-                                    passwordController,
-
-                                hint: '••••••••',
-
-                                icon:
-                                    Icons.lock_person_outlined,
-
-                                isPassword: true,
-
-                                obscure:
-                                    obscurePassword,
-
-                                onToggle: () {
-
-                                  setState(() {
-
-                                    obscurePassword =
-                                        !obscurePassword;
-                                  });
-                                },
-                              ),
-
-                              Align(
-
-                                alignment:
-                                    Alignment.centerRight,
-
-                                child: TextButton(
-
-                                  onPressed: () {},
-
-                                  child: Text(
-
-                                    'Lupa Sandi?',
-
-                                    style: TextStyle(
-                                      color:
-                                          primaryColor,
-
-                                      fontWeight:
-                                          FontWeight.bold,
-                                    ),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: () {},
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                ),
+                                child: Text(
+                                  'Lupa Sandi?',
+                                  style: TextStyle(
+                                    color: primaryBlue,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
                                   ),
                                 ),
                               ),
+                            ),
+                            const SizedBox(height: 12),
 
-                              const SizedBox(height: 24),
-
-                              // BUTTON LOGIN
-                              _buildGradientButton(),
-                            ],
-                          ),
+                            // BUTTON LOGIN
+                            _buildGradientButton(),
+                          ],
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 40),
 
-                    const Text(
-
-                      '© 2024 Mediatama System • v1.0',
-
-                      style: TextStyle(
-                        color: Colors.black26,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
+                    // =========================================
+                    // FOOTER (Animated)
+                    // =========================================
+                    _FadeInSlide(
+                      delay: 300,
+                      child: Text(
+                        '© 2024 Mediatama System • v1.0',
+                        style: TextStyle(
+                          color: textMuted.withValues(alpha: 0.6),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ],
@@ -463,28 +327,16 @@ class _LoginPageState extends State<LoginPage> {
   // =========================================
   // BACKGROUND BLOB
   // =========================================
-  Widget _buildBlob(
-    double size,
-    Color color,
-  ) {
-
+  Widget _buildBlob(double size, Color color) {
     return Container(
-
       width: size,
       height: size,
-
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,
       ),
-
       child: BackdropFilter(
-
-        filter: ImageFilter.blur(
-          sigmaX: 50,
-          sigmaY: 50,
-        ),
-
+        filter: ImageFilter.blur(sigmaX: 60, sigmaY: 60),
         child: Container(
           color: Colors.transparent,
         ),
@@ -496,200 +348,171 @@ class _LoginPageState extends State<LoginPage> {
   // INPUT LABEL
   // =========================================
   Widget _buildInputLabel(String label) {
-
     return Padding(
-
-      padding: const EdgeInsets.only(
-        left: 4,
-        bottom: 10,
-      ),
-
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
       child: Text(
-
         label,
-
         style: TextStyle(
           color: textDark,
           fontWeight: FontWeight.w700,
-          fontSize: 14,
+          fontSize: 13,
+          letterSpacing: 0.3,
         ),
       ),
     );
   }
 
   // =========================================
-  // CUSTOM FIELD
+  // CUSTOM FIELD (Modern Clean UI)
   // =========================================
   Widget _buildCustomField({
-
     required TextEditingController controller,
     required String hint,
     required IconData icon,
-
     bool isPassword = false,
     bool obscure = false,
-
     VoidCallback? onToggle,
-
   }) {
-
     return Container(
-
       decoration: BoxDecoration(
-
-        color: Colors.white,
-
-        borderRadius:
-            BorderRadius.circular(18),
-
-        boxShadow: [
-
-          BoxShadow(
-            color:
-                Colors.black.withOpacity(0.02),
-
-            blurRadius: 15,
-
-            offset: const Offset(0, 5),
-          ),
-        ],
+        color: inputBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white, width: 2), // Memberikan efek timbul sedikit
       ),
-
       child: TextField(
-
         controller: controller,
-
         obscureText: obscure,
-
         style: TextStyle(
           color: textDark,
           fontWeight: FontWeight.w600,
+          fontSize: 15,
         ),
-
         decoration: InputDecoration(
-
-          prefixIcon: Icon(
-            icon,
-            color: primaryColor,
-            size: 22,
+          prefixIcon: Padding(
+            padding: const EdgeInsets.only(left: 8.0, right: 4.0),
+            child: Icon(
+              icon,
+              color: textMuted,
+              size: 22,
+            ),
           ),
-
           suffixIcon: isPassword
-
-              ? IconButton(
-
-                  icon: Icon(
-
-                    obscure
-                        ? Icons.visibility_off
-                        : Icons.visibility,
-
-                    color: Colors.grey,
+              ? Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: IconButton(
+                    icon: Icon(
+                      obscure ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                      color: textMuted.withValues(alpha: 0.8),
+                      size: 22,
+                    ),
+                    onPressed: onToggle,
                   ),
-
-                  onPressed: onToggle,
                 )
-
               : null,
-
           hintText: hint,
-
-          hintStyle: const TextStyle(
-            color: Colors.black26,
-            fontWeight: FontWeight.w400,
+          hintStyle: TextStyle(
+            color: textMuted.withValues(alpha: 0.5),
+            fontWeight: FontWeight.w500,
+            fontSize: 14,
           ),
-
           border: OutlineInputBorder(
-
-            borderRadius:
-                BorderRadius.circular(18),
-
+            borderRadius: BorderRadius.circular(20),
             borderSide: BorderSide.none,
           ),
-
-          contentPadding:
-              const EdgeInsets.symmetric(
-            vertical: 20,
-          ),
+          contentPadding: const EdgeInsets.symmetric(vertical: 20),
         ),
       ),
     );
   }
 
   // =========================================
-  // BUTTON LOGIN
+  // BUTTON LOGIN (Gradient Primary to Navy)
   // =========================================
   Widget _buildGradientButton() {
-
     return Container(
-
       width: double.infinity,
-      height: 60,
-
+      height: 58,
       decoration: BoxDecoration(
-
-        borderRadius:
-            BorderRadius.circular(20),
-
+        borderRadius: BorderRadius.circular(18),
         gradient: LinearGradient(
-
-          colors: [
-            secondaryColor,
-            primaryColor,
-          ],
-
+          colors: [primaryBlue, navyDark], // Kombinasi Terang ke Biru Dongker Gelap
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-
         boxShadow: [
-
           BoxShadow(
-            color:
-                primaryColor.withOpacity(0.3),
-
+            color: navyDark.withValues(alpha: 0.3),
             blurRadius: 20,
-
-            offset: const Offset(0, 10),
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-
       child: ElevatedButton(
-
-        onPressed:
-            isLoading ? null : login,
-
+        onPressed: isLoading ? null : login,
         style: ElevatedButton.styleFrom(
-
           backgroundColor: Colors.transparent,
-
+          disabledBackgroundColor: Colors.grey.withValues(alpha: 0.2),
           shadowColor: Colors.transparent,
-
           shape: RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(18),
           ),
         ),
-
         child: isLoading
-
-            ? const CircularProgressIndicator(
-                color: Colors.white,
+            ? const SizedBox(
+                height: 24,
+                width: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2.5,
+                ),
               )
-
             : const Text(
-
                 'MASUK KE DASHBOARD',
-
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
-                  letterSpacing: 1,
+                  letterSpacing: 1.2,
                 ),
               ),
       ),
+    );
+  }
+}
+
+// =========================================
+// ANIMATION HELPER WIDGET
+// =========================================
+class _FadeInSlide extends StatelessWidget {
+  final Widget child;
+  final int delay;
+
+  const _FadeInSlide({required this.child, required this.delay});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: Future.delayed(Duration(milliseconds: delay)),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox.shrink(); // Menyembunyikan widget sebelum animasi mulai
+        }
+        return TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: const Duration(milliseconds: 700),
+          curve: Curves.easeOutCubic,
+          builder: (context, value, child) {
+            return Opacity(
+              opacity: value,
+              child: Transform.translate(
+                offset: Offset(0, 40 * (1 - value)), // Slide up 40 pixel
+                child: child,
+              ),
+            );
+          },
+          child: child,
+        );
+      },
     );
   }
 }

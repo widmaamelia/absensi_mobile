@@ -11,6 +11,7 @@ import 'package:intl/intl.dart';
 import '../config/api_config.dart';
 import '../model/absen.dart';
 import 'absen.dart';
+import 'tugas.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -20,33 +21,29 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  // ================================
+  // COLORS (Modern Tailwind Palette)
+  // ================================
+  final Color primaryDark = const Color.fromARGB(255, 0, 16, 52); // Slate 900
+  final Color primaryCard = const Color.fromARGB(255, 25, 42, 68); // Slate 800
+  final Color bgColor = const Color.fromARGB(255, 233, 244, 255);     // Slate 50
+  final Color accentBlue = const Color(0xFF3B82F6);  // Blue 500
 
   // ================================
-  // COLORS
-  // ================================
-  final Color primaryDark = const Color(0xFF0F172A);
-  final Color primaryCard = const Color(0xFF1E293B);
-  final Color bgColor = const Color(0xFFF8FAFC);
-
-  // ================================
-  // STATE
+  // STATE (Logic tidak disentuh!)
   // ================================
   bool isFetchingToday = true;
-
   AbsensiModel? absensiHariIni;
-
   String userName = '';
 
   int totalHadir = 0;
   int totalIzin = 0;
   int totalTerlambat = 0;
-
   int _currentIndex = 0;
 
   @override
   void initState() {
     super.initState();
-
     _loadUserName();
     _fetchAbsensiHariIni();
     _fetchSummary();
@@ -57,7 +54,6 @@ class _DashboardPageState extends State<DashboardPage> {
   // ================================
   Future<void> _loadUserName() async {
     final prefs = await SharedPreferences.getInstance();
-
     setState(() {
       userName = prefs.getString('user_name') ?? 'Magang';
     });
@@ -68,12 +64,9 @@ class _DashboardPageState extends State<DashboardPage> {
   // ================================
   Future<void> _fetchAbsensiHariIni() async {
     setState(() => isFetchingToday = true);
-
     try {
       final prefs = await SharedPreferences.getInstance();
-
       final token = prefs.getString('auth_token') ?? '';
-
       final response = await http.get(
         Uri.parse(ApiConfig.todayAbsen),
         headers: {
@@ -84,7 +77,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-
         if (data['data'] != null) {
           setState(() {
             absensiHariIni = AbsensiModel.fromJson(data['data']);
@@ -92,17 +84,9 @@ class _DashboardPageState extends State<DashboardPage> {
         }
       }
     } on TimeoutException {
-      _showSnackbar(
-        'Timeout',
-        'Periksa koneksi internet Anda.',
-        Colors.orange,
-      );
+      _showSnackbar('Timeout', 'Periksa koneksi internet Anda.', Colors.orange);
     } on SocketException {
-      _showSnackbar(
-        'Offline',
-        'Tidak ada koneksi jaringan.',
-        Colors.red,
-      );
+      _showSnackbar('Offline', 'Tidak ada koneksi jaringan.', Colors.red);
     } catch (e) {
       debugPrint(e.toString());
     } finally {
@@ -116,9 +100,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Future<void> _fetchSummary() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-
       final token = prefs.getString('auth_token') ?? '';
-
       final response = await http.get(
         Uri.parse(ApiConfig.summaryAbsen),
         headers: {
@@ -129,7 +111,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-
         setState(() {
           totalHadir = data['hadir'] ?? 0;
           totalIzin = data['izin'] ?? 0;
@@ -144,38 +125,20 @@ class _DashboardPageState extends State<DashboardPage> {
   // ================================
   // SNACKBAR
   // ================================
-  void _showSnackbar(
-    String title,
-    String message,
-    Color color,
-  ) {
+  void _showSnackbar(String title, String message, Color color) {
     if (!mounted) return;
-
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         backgroundColor: color,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              message,
-              style: const TextStyle(
-                color: Colors.white,
-              ),
-            ),
+            Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            Text(message, style: const TextStyle(color: Colors.white)),
           ],
         ),
       ),
@@ -188,11 +151,8 @@ class _DashboardPageState extends State<DashboardPage> {
   void _goToAbsen() async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const AbsenPage(),
-      ),
+      MaterialPageRoute(builder: (_) => const AbsenPage()),
     );
-
     _fetchAbsensiHariIni();
     _fetchSummary();
   }
@@ -200,21 +160,11 @@ class _DashboardPageState extends State<DashboardPage> {
   // ================================
   // HELPER
   // ================================
-  bool get _sudahMasuk =>
-      absensiHariIni?.sudahMasuk ?? false;
-
-  bool get _sudahPulang =>
-      absensiHariIni?.sudahPulang ?? false;
-
+  bool get _sudahMasuk => absensiHariIni?.sudahMasuk ?? false;
+  bool get _sudahPulang => absensiHariIni?.sudahPulang ?? false;
   String get _buttonLabel {
-    if (_sudahPulang) {
-      return 'ABSENSI SELESAI';
-    }
-
-    if (_sudahMasuk) {
-      return 'ABSEN PULANG';
-    }
-
+    if (_sudahPulang) return 'ABSENSI SELESAI';
+    if (_sudahMasuk) return 'ABSEN PULANG';
     return 'ABSEN MASUK';
   }
 
@@ -223,56 +173,35 @@ class _DashboardPageState extends State<DashboardPage> {
   // ================================
   @override
   Widget build(BuildContext context) {
-
-    final today = DateFormat(
-      'dd MMMM yyyy',
-    ).format(DateTime.now());
+    final today = DateFormat('dd MMMM yyyy').format(DateTime.now());
 
     return Scaffold(
       backgroundColor: bgColor,
-
       body: SafeArea(
         child: RefreshIndicator(
+          color: accentBlue,
           onRefresh: () async {
             await _fetchAbsensiHariIni();
             await _fetchSummary();
           },
-
           child: SingleChildScrollView(
-            physics:
-                const AlwaysScrollableScrollPhysics(),
-
-            padding: const EdgeInsets.all(20),
-
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
-
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
-                // HEADER
-                _buildHeader(),
-
-                const SizedBox(height: 30),
-
-                // GREETING
-                _buildGreeting(),
-
-                const SizedBox(height: 24),
-
-                // ABSENSI CARD
-                _buildAbsensiCard(today),
-
-                const SizedBox(height: 30),
-
-                // SUMMARY
-                _buildSummarySection(),
+                _FadeInSlide(delay: 0, child: _buildHeader()),
+                const SizedBox(height: 32),
+                _FadeInSlide(delay: 100, child: _buildGreeting()),
+                const SizedBox(height: 28),
+                _FadeInSlide(delay: 200, child: _buildAbsensiCard(today)),
+                const SizedBox(height: 36),
+                _FadeInSlide(delay: 300, child: _buildSummarySection()),
               ],
             ),
           ),
         ),
       ),
-
       bottomNavigationBar: _buildBottomNav(),
     );
   }
@@ -282,62 +211,69 @@ class _DashboardPageState extends State<DashboardPage> {
   // ================================
   Widget _buildHeader() {
     return Row(
-      mainAxisAlignment:
-          MainAxisAlignment.spaceBetween,
-
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-
         Row(
           children: [
-
             Container(
               padding: const EdgeInsets.all(12),
-
               decoration: BoxDecoration(
-                color: primaryDark,
-                borderRadius:
-                    BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  colors: [primaryDark, primaryCard],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: primaryDark.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-
-              child: const Icon(
-                Icons.dashboard,
-                color: Colors.white,
-              ),
+              child: const Icon(Icons.dashboard_rounded, color: Colors.white, size: 22),
             ),
-
-            const SizedBox(width: 14),
-
+            const SizedBox(width: 16),
             Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
-
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 Text(
                   'InternTrack',
                   style: TextStyle(
                     fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w800,
                     color: primaryDark,
+                    letterSpacing: -0.5,
                   ),
                 ),
-
                 Text(
                   'Monitoring Magang',
                   style: TextStyle(
                     color: Colors.grey.shade500,
                     fontSize: 13,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
           ],
         ),
-
-        const CircleAvatar(
-          radius: 24,
-          backgroundImage: NetworkImage(
-            'https://i.pravatar.cc/150?img=11',
+        Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 3),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: const CircleAvatar(
+            radius: 24,
+            backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=11'),
           ),
         ),
       ],
@@ -349,26 +285,23 @@ class _DashboardPageState extends State<DashboardPage> {
   // ================================
   Widget _buildGreeting() {
     return Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
-
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         Text(
           'Halo $userName 👋',
           style: TextStyle(
             fontSize: 28,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w800,
             color: primaryDark,
+            letterSpacing: -0.5,
           ),
         ),
-
-        const SizedBox(height: 8),
-
+        const SizedBox(height: 6),
         Text(
-          'Selamat datang kembali.',
+          'Siap produktif hari ini? Jangan lupa absen ya.',
           style: TextStyle(
             color: Colors.grey.shade600,
+            fontSize: 15,
           ),
         ),
       ],
@@ -381,92 +314,94 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildAbsensiCard(String today) {
     return Container(
       width: double.infinity,
-
       padding: const EdgeInsets.all(24),
-
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          BoxShadow(
+            color: primaryDark.withOpacity(0.15),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
         gradient: LinearGradient(
-          colors: [
-            primaryCard,
-            primaryDark,
-          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [primaryCard, primaryDark],
         ),
       ),
-
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
-
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
-          Text(
-            today,
-            style: const TextStyle(
-              color: Colors.white70,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Status Kehadiran',
+                style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  today,
+                  style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
           ),
-
-          const SizedBox(height: 20),
-
+          const SizedBox(height: 24),
           isFetchingToday
-              ? const Center(
-                  child:
-                      CircularProgressIndicator(
-                    color: Colors.white,
-                  ),
+              ? const SizedBox(
+                  height: 90,
+                  child: Center(child: CircularProgressIndicator(color: Colors.white)),
                 )
               : Row(
                   children: [
-
                     Expanded(
                       child: _infoCard(
                         title: 'Masuk',
-                        value: absensiHariIni
-                                ?.jamMasuk
-                                ?.substring(0, 5) ??
-                            '--:--',
-                        icon: Icons.login,
-                        color: Colors.green,
+                        value: absensiHariIni?.jamMasuk?.substring(0, 5) ?? '--:--',
+                        icon: Icons.login_rounded,
+                        color: const Color(0xFF10B981), // Tailwind Emerald 500
                       ),
                     ),
-
-                    const SizedBox(width: 14),
-
+                    const SizedBox(width: 16),
                     Expanded(
                       child: _infoCard(
                         title: 'Pulang',
-                        value: absensiHariIni
-                                ?.jamPulang
-                                ?.substring(0, 5) ??
-                            '--:--',
-                        icon: Icons.logout,
-                        color: Colors.red,
+                        value: absensiHariIni?.jamPulang?.substring(0, 5) ?? '--:--',
+                        icon: Icons.logout_rounded,
+                        color: const Color(0xFFEF4444), // Tailwind Red 500
                       ),
                     ),
                   ],
                 ),
-
-          const SizedBox(height: 24),
-
+          const SizedBox(height: 28),
           SizedBox(
             width: double.infinity,
             height: 56,
-
             child: ElevatedButton(
-              onPressed:
-                  _sudahPulang ? null : _goToAbsen,
-
+              onPressed: _sudahPulang ? null : _goToAbsen,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
+                backgroundColor: accentBlue,
+                disabledBackgroundColor: Colors.white.withOpacity(0.1),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
-
               child: Text(
                 _buttonLabel,
                 style: TextStyle(
-                  color: primaryDark,
+                  // color: _sudahPulang ? Colors.white50 : Colors.white,
+                  color: _sudahPulang ? const Color.fromARGB(162, 150, 252, 194) : const Color.fromARGB(136, 196, 255, 225),
                   fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
+                  fontSize: 15,
                 ),
               ),
             ),
@@ -481,53 +416,44 @@ class _DashboardPageState extends State<DashboardPage> {
   // ================================
   Widget _buildSummarySection() {
     return Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
-
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         Text(
           'Ringkasan Bulan Ini',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
             color: primaryDark,
+            letterSpacing: -0.5,
           ),
         ),
-
-        const SizedBox(height: 18),
-
+        const SizedBox(height: 20),
         Row(
           children: [
-
             Expanded(
               child: _summaryCard(
                 title: 'Hadir',
                 value: totalHadir.toString(),
-                icon: Icons.check_circle,
-                color: Colors.green,
+                icon: Icons.check_circle_rounded,
+                color: const Color(0xFF10B981),
               ),
             ),
-
-            const SizedBox(width: 14),
-
+            const SizedBox(width: 16),
             Expanded(
               child: _summaryCard(
                 title: 'Izin',
                 value: totalIzin.toString(),
-                icon: Icons.assignment,
-                color: Colors.orange,
+                icon: Icons.assignment_rounded,
+                color: const Color(0xFFF59E0B),
               ),
             ),
-
-            const SizedBox(width: 14),
-
+            const SizedBox(width: 16),
             Expanded(
               child: _summaryCard(
                 title: 'Telat',
                 value: totalTerlambat.toString(),
-                icon: Icons.timer,
-                color: Colors.red,
+                icon: Icons.timer_rounded,
+                color: const Color(0xFFEF4444),
               ),
             ),
           ],
@@ -537,51 +463,59 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   // ================================
-  // BOTTOM NAV
+  // BOTTOM NAV (FIXED BUG TEKS HILANG)
   // ================================
   Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      currentIndex: _currentIndex,
+    return Container(
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        backgroundColor: Colors.white,
+        selectedItemColor: primaryDark,
+        unselectedItemColor: Colors.grey.shade400,
+        showUnselectedLabels: true,
+        type: BottomNavigationBarType.fixed, // Penting agar teks tidak hilang
+        elevation: 0,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
 
-      selectedItemColor: primaryDark,
-
-      onTap: (index) {
-        setState(() {
-          _currentIndex = index;
-        });
-
-        if (index == 2) {
-          _goToAbsen();
-        }
-      },
-
-      items: const [
-
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Home',
-        ),
-
-        BottomNavigationBarItem(
-          icon: Icon(Icons.assignment),
-          label: 'Tugas',
-        ),
-
-        BottomNavigationBarItem(
-          icon: Icon(Icons.history),
-          label: 'Riwayat',
-        ),
-
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: 'Profil',
-        ),
-      ],
+          // Index 1 adalah menu Tugas
+          if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const TugasPage()),
+            );
+          }
+          
+          // Index 2 adalah menu Riwayat
+          if (index == 2) {
+            _goToAbsen(); 
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.assignment_outlined), label: 'Tugas'),
+          BottomNavigationBarItem(icon: Icon(Icons.history_rounded), label: 'Riwayat'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline_rounded), label: 'Profil'),
+        ],
+      ),
     );
   }
 
   // ================================
-  // INFO CARD
+  // INFO CARD (Glassmorphism Effect)
   // ================================
   Widget _infoCard({
     required String title,
@@ -589,41 +523,41 @@ class _DashboardPageState extends State<DashboardPage> {
     required IconData icon,
     required Color color,
   }) {
-
     return Container(
       padding: const EdgeInsets.all(16),
-
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
-        borderRadius:
-            BorderRadius.circular(20),
+        color: Colors.white.withOpacity(0.06),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        borderRadius: BorderRadius.circular(24),
       ),
-
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
-
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
-          Icon(icon, color: color),
-
-          const SizedBox(height: 12),
-
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(height: 16),
           Text(
             title,
-            style: const TextStyle(
-              color: Colors.white70,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.6),
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
             ),
           ),
-
-          const SizedBox(height: 6),
-
+          const SizedBox(height: 4),
           Text(
             value,
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
-              fontSize: 20,
+              fontSize: 22,
+              letterSpacing: 0.5,
             ),
           ),
         ],
@@ -632,7 +566,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   // ================================
-  // SUMMARY CARD
+  // SUMMARY CARD (Tailwind Shadow Card)
   // ================================
   Widget _summaryCard({
     required String title,
@@ -640,35 +574,98 @@ class _DashboardPageState extends State<DashboardPage> {
     required IconData icon,
     required Color color,
   }) {
-
     return Container(
-      padding: const EdgeInsets.all(18),
-
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius:
-            BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            // color: Colors.slate.shade900.withOpacity(0.04), // Soft shadow
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-
       child: Column(
         children: [
-
-          Icon(icon, color: color),
-
-          const SizedBox(height: 12),
-
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(height: 14),
           Text(
             value,
             style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+              fontSize: 26,
+              fontWeight: FontWeight.w800,
               color: primaryDark,
             ),
           ),
-
-          Text(title),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: TextStyle(
+              color: Colors.grey.shade500,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+          ),
         ],
       ),
+    );
+  }
+}
+
+// ================================
+// ANIMATION HELPER WIDGET
+// ================================
+class _FadeInSlide extends StatefulWidget {
+  final Widget child;
+  final int delay;
+
+  const _FadeInSlide({required this.child, required this.delay});
+
+  @override
+  State<_FadeInSlide> createState() => _FadeInSlideState();
+}
+
+class _FadeInSlideState extends State<_FadeInSlide> {
+  bool _show = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Memastikan animasi hanya dipanggil 1x saat widget pertama kali dimuat
+    Future.delayed(Duration(milliseconds: widget.delay), () {
+      if (mounted) {
+        setState(() {
+          _show = true;
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: _show ? 1.0 : 0.0),
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 30 * (1 - value)),
+            child: widget.child,
+          ),
+        );
+      },
     );
   }
 }
