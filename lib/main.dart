@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
       title: 'InternTrack',
       theme: ThemeData(
         fontFamily: 'Poppins',
-        scaffoldBackgroundColor: const Color(0xFFF4F6FB),
+        scaffoldBackgroundColor: const Color.fromARGB(255, 233, 244, 255),
       ),
 
       // REDIRECT KE LOGIN
