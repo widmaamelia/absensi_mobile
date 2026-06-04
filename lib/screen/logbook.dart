@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:url_launcher/url_launcher.dart'; // Jangan lupa install url_launcher
 
 import '../config/api_config.dart';
 
@@ -34,7 +35,7 @@ class _LogbookPageState extends State<LogbookPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token') ?? '';
-      
+
       final response = await http.get(
         Uri.parse(ApiConfig.logbook),
         headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
@@ -43,17 +44,16 @@ class _LogbookPageState extends State<LogbookPage> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
-          logbooks = data['data'] ?? []; // Sesuaikan dengan response Laravel
+          logbooks = data['data'] ?? []; 
         });
       }
     } catch (e) {
       debugPrint("Error fetching logbooks: $e");
     } finally {
-      setState(() => isLoading = false);
+      if (mounted) setState(() => isLoading = false);
     }
   }
 
-  // Menampilkan form tambah logbook dari bawah (Sangat Modern)
   void _showAddLogbookModal() {
     showModalBottomSheet(
       context: context,
@@ -62,7 +62,7 @@ class _LogbookPageState extends State<LogbookPage> {
       builder: (context) => const AddLogbookModal(),
     ).then((value) {
       if (value == true) {
-        _fetchLogbooks(); // Refresh data jika berhasil tambah
+        _fetchLogbooks(); 
       }
     });
   }
@@ -72,8 +72,9 @@ class _LogbookPageState extends State<LogbookPage> {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, color: primaryDark, size: 20),
           onPressed: () => Navigator.pop(context),
@@ -89,20 +90,25 @@ class _LogbookPageState extends State<LogbookPage> {
                   color: accentBlue,
                   onRefresh: _fetchLogbooks,
                   child: ListView.builder(
-                    padding: const EdgeInsets.all(24),
-                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                     itemCount: logbooks.length,
                     itemBuilder: (context, index) {
-                      return _buildLogbookCard(logbooks[index]);
+                      final delay = 100 + (index * 100);
+                      return _FadeInSlide(
+                        delay: delay,
+                        child: _buildLogbookCard(logbooks[index]),
+                      );
                     },
                   ),
                 ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddLogbookModal,
         backgroundColor: accentBlue,
-        elevation: 4,
+        elevation: 6,
+        // shadowColor: accentBlue.withOpacity(0.5),
         icon: const Icon(Icons.add_rounded, color: Colors.white),
-        label: const Text("Isi Logbook", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        label: const Text("Isi Logbook", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
       ),
     );
   }
@@ -112,92 +118,251 @@ class _LogbookPageState extends State<LogbookPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.menu_book_rounded, size: 80, color: Colors.grey.shade300),
-          const SizedBox(height: 16),
-          Text("Belum ada catatan logbook", style: TextStyle(color: Colors.grey.shade500, fontSize: 16)),
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [BoxShadow(color: accentBlue.withOpacity(0.1), blurRadius: 30, offset: const Offset(0, 10))],
+            ),
+            child: Icon(Icons.menu_book_rounded, size: 60, color: accentBlue.withOpacity(0.5)),
+          ),
+          const SizedBox(height: 24),
+          Text("Belum Ada Logbook", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: primaryDark)),
+          const SizedBox(height: 8),
+          Text(
+            "Kamu belum menulis catatan aktivitas hari ini.\nYuk, rajin isi logbook!",
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+          ),
         ],
       ),
     );
   }
 
+  // ==========================================
+  // CARD LOGBOOK ELEGAN (Tema Gelap / Dark Card)
+  // ==========================================
   Widget _buildLogbookCard(dynamic logbook) {
-    String status = logbook['status_approval'] ?? 'pending';
-    Color statusColor = status == 'approved' ? const Color(0xFF10B981) : (status == 'rejected' ? const Color(0xFFEF4444) : const Color(0xFFF59E0B));
-    
+    String status = logbook['status_approval'] ?? 'Pending';
+    Color statusColor;
+    IconData statusIcon;
+
+    // 🔥 Warna status sedikit dicerahkan agar lebih menyala di background gelap
+    if (status == 'Disetujui') {
+      statusColor = const Color(0xFF34D399); // Emerald Light
+      statusIcon = Icons.check_circle_rounded;
+    } else if (status == 'Ditolak') {
+      statusColor = const Color(0xFFF87171); // Red Light
+      statusIcon = Icons.cancel_rounded;
+    } else {
+      statusColor = const Color(0xFFFBBF24); // Amber Light
+      statusIcon = Icons.hourglass_top_rounded;
+    }
+
     String formattedDate = '-';
     if (logbook['tanggal'] != null) {
-      formattedDate = DateFormat('dd MMM yyyy').format(DateTime.parse(logbook['tanggal']));
+      formattedDate = DateFormat('dd MMM yyyy').format(DateTime.parse(logbook['tanggal']).toLocal());
     }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color.fromARGB(255, 73, 106, 161), // Warna background pilihan Zukira
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20, offset: const Offset(0, 10))],
+        boxShadow: [
+          BoxShadow(
+            color: primaryDark.withOpacity(0.1),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          )
+        ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(formattedDate, style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w600, fontSize: 13)),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  status.toUpperCase(),
-                  style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            logbook['judul_aktivitas'] ?? 'Tanpa Judul',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryDark),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            logbook['deskripsi'] ?? '-',
-            style: TextStyle(color: Colors.grey.shade700, height: 1.5, fontSize: 14),
-          ),
-          if (logbook['catatan_mentor'] != null) ...[
-            const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Divider()),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // HEADER CARD (Tanggal & Badge Status)
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               decoration: BoxDecoration(
-                color: accentBlue.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: accentBlue.withValues(alpha: 0.1)),
+                color: Colors.white.withOpacity(0.05), // Aksen transparan
+                border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.1))),
               ),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(Icons.comment_rounded, color: accentBlue, size: 16),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      "Mentor: ${logbook['catatan_mentor']}",
-                      style: TextStyle(color: primaryDark, fontSize: 13, fontStyle: FontStyle.italic),
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today_rounded, size: 14, color: Colors.white70),
+                      const SizedBox(width: 8),
+                      Text(
+                        formattedDate,
+                        style: const TextStyle(
+                          color: Colors.white70, // Teks putih tulang
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.2), // Background badge menyala
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: statusColor.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(statusIcon, size: 12, color: statusColor),
+                        const SizedBox(width: 4),
+                        Text(
+                          status.toUpperCase(),
+                          style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-          ]
-        ],
+
+            // BODY CARD
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    logbook['judul_aktivitas'] ?? 'Tanpa Judul',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -0.5), // Teks putih terang
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    logbook['deskripsi'] ?? '-',
+                    style: TextStyle(color: Colors.white.withOpacity(0.7), height: 1.5, fontSize: 13), // Teks deskripsi abu-abu muda
+                  ),
+
+                  // CATATAN MENTOR (Hanya muncul jika ada)
+                  if (logbook['catatan_mentor'] != null && logbook['catatan_mentor'].toString().isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E293B).withOpacity(0.4), // Warna biru pekat transparan
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.white.withOpacity(0.1)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), shape: BoxShape.circle),
+                            child: const Icon(Icons.format_quote_rounded, color: Colors.white70, size: 16),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text("Catatan Mentor:", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white54, letterSpacing: 0.5)),
+                                const SizedBox(height: 4),
+                                Text(
+                                  logbook['catatan_mentor'],
+                                  style: const TextStyle(color: Colors.white, fontSize: 13, fontStyle: FontStyle.italic), // Catatan putih terang
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  // TOMBOL LIHAT FOTO BUKTI
+                  if (logbook['foto_bukti'] != null) ...[
+                    const SizedBox(height: 16),
+                    InkWell(
+                      onTap: () async {
+                        final Uri url = Uri.parse('http://192.168.100.172:8000/storage/${logbook['foto_bukti']}');
+                        if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tidak bisa membuka foto')));
+                          }
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1), // Tombol semi-transparan
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.white.withOpacity(0.2)),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.image_outlined, size: 16, color: Colors.white),
+                            SizedBox(width: 6),
+                            Text("Lihat Foto Bukti", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ]
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 // ==========================================
-// BOTTOM SHEET FORM TAMBAH LOGBOOK
+// ANIMASI FADE IN & SLIDE (Agar Munculnya Mulus)
+// ==========================================
+class _FadeInSlide extends StatelessWidget {
+  final Widget child;
+  final int delay;
+
+  const _FadeInSlide({required this.child, required this.delay});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: Future.delayed(Duration(milliseconds: delay)),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
+        return TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeOutCubic,
+          builder: (context, value, child) {
+            return Opacity(
+              opacity: value,
+              child: Transform.translate(
+                offset: Offset(0, 30 * (1 - value)),
+                child: child,
+              ),
+            );
+          },
+          child: child,
+        );
+      },
+    );
+  }
+}
+
+// ==========================================
+// BOTTOM SHEET FORM TAMBAH LOGBOOK (Biarkan Sama)
 // ==========================================
 class AddLogbookModal extends StatefulWidget {
   const AddLogbookModal({super.key});
@@ -222,7 +387,6 @@ class _AddLogbookModalState extends State<AddLogbookModal> {
   }
 
   Future<void> _submit() async {
-    // 1. Sembunyikan keyboard saat tombol ditekan
     FocusScope.of(context).unfocus();
 
     if (_judulController.text.isEmpty || _deskripsiController.text.isEmpty || _selectedFile == null) {
@@ -239,7 +403,6 @@ class _AddLogbookModalState extends State<AddLogbookModal> {
       
       var request = http.MultipartRequest('POST', Uri.parse(ApiConfig.logbook));
       
-      // 🔥 PENTING 1: Beritahu Laravel agar membalas dengan format JSON
       request.headers['Authorization'] = 'Bearer $token';
       request.headers['Accept'] = 'application/json'; 
       
@@ -249,7 +412,6 @@ class _AddLogbookModalState extends State<AddLogbookModal> {
       
       request.files.add(await http.MultipartFile.fromPath('foto_bukti', _selectedFile!.path));
 
-      // 🔥 PENTING 2: Baca balasan dari Laravel secara utuh
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
 
@@ -261,28 +423,19 @@ class _AddLogbookModalState extends State<AddLogbookModal> {
           );
         }
       } else {
-        // 🔥 DETEKTIF: Kalau ditolak, kita tangkap pesan aslinya!
-        debugPrint("ERROR LARAVEL: ${response.statusCode} - ${response.body}");
-        
         String pesanError = "Gagal mengirim data";
         try {
           final errorData = jsonDecode(response.body);
-          pesanError = errorData['message'] ?? response.body; // Ambil pesan dari Laravel
+          pesanError = errorData['message'] ?? response.body; 
         } catch (e) {
           pesanError = response.body;
         }
-        
         throw Exception(pesanError);
       }
     } catch (e) {
-      // Tampilkan errornya di layar HP!
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString(), maxLines: 3, overflow: TextOverflow.ellipsis), 
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          )
+          SnackBar(content: Text(e.toString(), maxLines: 3, overflow: TextOverflow.ellipsis), backgroundColor: Colors.red)
         );
       }
     } finally {
@@ -314,7 +467,7 @@ class _AddLogbookModalState extends State<AddLogbookModal> {
               decoration: InputDecoration(
                 labelText: "Judul Aktivitas",
                 filled: true,
-                fillColor: Colors.grey.shade50,
+                fillColor: const Color.fromARGB(255, 233, 244, 255),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               ),
             ),
@@ -325,13 +478,12 @@ class _AddLogbookModalState extends State<AddLogbookModal> {
               decoration: InputDecoration(
                 labelText: "Deskripsi",
                 filled: true,
-                fillColor: Colors.grey.shade50,
+                fillColor: const Color.fromARGB(255, 233, 244, 255),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               ),
             ),
             const SizedBox(height: 16),
             
-            // Tombol Upload Foto
             InkWell(
               onTap: _pickFile,
               borderRadius: BorderRadius.circular(16),
@@ -339,9 +491,9 @@ class _AddLogbookModalState extends State<AddLogbookModal> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
+                  border: Border.all(color: _selectedFile != null ? Colors.green.shade300 : Colors.grey.shade300, width: 1.5),
                   borderRadius: BorderRadius.circular(16),
-                  color: Colors.grey.shade50,
+                  color: _selectedFile != null ? Colors.green.shade50 : Colors.grey.shade50,
                 ),
                 child: Column(
                   children: [

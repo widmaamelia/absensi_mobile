@@ -175,10 +175,10 @@ class _TugasPageState extends State<TugasPage> {
                     Text(
                       'Tugas Terkirim',
                       style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
                         color: primaryDark,
-                        letterSpacing: -1.0,
+                        letterSpacing: 1.0,
                       ),
                     ),
                     const SizedBox(height: 6),
