@@ -11,8 +11,8 @@ class DetailTugasPage extends StatelessWidget {
     // ================================
     // COLORS (Tailwind CSS Palette)
     // ================================
-    final Color primaryDark = const Color(0xFF0F172A);       // Slate 900
-    final Color cardDark = const Color.fromARGB(255, 0, 30, 79); // Sesuai dengan card tugas.dart
+    final Color primaryDark = const Color.fromARGB(255, 17, 31, 64);       // Slate 900
+    final Color cardDark = const Color.fromARGB(255, 46, 81, 138);      // Sesuai dengan card tugas.dart
     final Color bgColor = const Color.fromARGB(255, 233, 244, 255);
     final Color accentBlue = const Color.fromARGB(255, 106, 140, 195);        // Blue 500
     final Color accentCyan = const Color.fromARGB(255, 140, 182, 240);        // Cyan 500

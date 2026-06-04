@@ -12,6 +12,8 @@ import '../config/api_config.dart';
 import '../model/absen.dart';
 import 'absen.dart';
 import 'tugas.dart';
+import 'logbook.dart';
+import 'profil.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -26,8 +28,8 @@ class _DashboardPageState extends State<DashboardPage> {
   // ================================
   final Color primaryDark = const Color.fromARGB(255, 0, 16, 52); // Slate 900
   final Color primaryCard = const Color.fromARGB(255, 25, 42, 68); // Slate 800
-  final Color bgColor = const Color.fromARGB(255, 233, 244, 255);     // Slate 50
-  final Color accentBlue = const Color(0xFF3B82F6);  // Blue 500
+  final Color bgColor = const Color.fromARGB(255, 233, 244, 255); // Slate 50
+  final Color accentBlue = const Color(0xFF3B82F6); // Blue 500
 
   // ================================
   // STATE (Logic tidak disentuh!)
@@ -59,6 +61,7 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
+
   // ================================
   // FETCH ABSENSI TODAY
   // ================================
@@ -67,13 +70,15 @@ class _DashboardPageState extends State<DashboardPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token') ?? '';
-      final response = await http.get(
-        Uri.parse(ApiConfig.todayAbsen),
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .get(
+            Uri.parse(ApiConfig.todayAbsen),
+            headers: {
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -101,13 +106,15 @@ class _DashboardPageState extends State<DashboardPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token') ?? '';
-      final response = await http.get(
-        Uri.parse(ApiConfig.summaryAbsen),
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .get(
+            Uri.parse(ApiConfig.summaryAbsen),
+            headers: {
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -137,7 +144,13 @@ class _DashboardPageState extends State<DashboardPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             Text(message, style: const TextStyle(color: Colors.white)),
           ],
         ),
@@ -216,30 +229,30 @@ class _DashboardPageState extends State<DashboardPage> {
         Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [primaryDark, primaryCard],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: primaryDark.withOpacity(0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+  padding: const EdgeInsets.all(12),
+  decoration: BoxDecoration(
+    color: Colors.blue, // 🔥 Gradien dihapus, diganti jadi warna putih solid
+    borderRadius: BorderRadius.circular(16),
+    boxShadow: [
+      BoxShadow(
+        color: bgColor.withOpacity(0.2), 
+        blurRadius: 8,
+        offset: const Offset(0, 4),
+      ),
+    ],
+  ),
+  child: Image.asset( 
+    'assets/ogo.jpg',
+    width: 25,
+    height: 25,
               ),
-              child: const Icon(Icons.dashboard_rounded, color: Colors.white, size: 22),
             ),
             const SizedBox(width: 16),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'InternTrack',
+                  'SIMAGANG',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -259,21 +272,75 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ],
         ),
-        Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 3),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+        // Container(
+        //   decoration: BoxDecoration(
+        //     shape: BoxShape.circle,
+        //     border: Border.all(color: Colors.white, width: 3),
+        //     boxShadow: [
+        //       BoxShadow(
+        //         color: Colors.black.withOpacity(0.1),
+        //         blurRadius: 10,
+        //         offset: const Offset(0, 4),
+        //       ),
+        //     ],
+        //   ),
+        //   child: const CircleAvatar(
+        //     radius: 24,
+        //     backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=11'),
+        //   ),
+        // ),
+        GestureDetector(
+          onTap: () {
+            // Animasi meluncur ke halaman Profil
+            // Navigator.push(
+            //   context,
+            //   MaterialPageRoute(builder: (context) => const ProfilPage()),
+            // );
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfilPage()),
+            ).then((_) {
+              // 🔥 JURUS RAHASIA: Fungsi ini akan otomatis berjalan SETELAH
+              // halaman profil ditutup dan kembali ke Dashboard.
+
+              _loadUserName();
+              // (Catatan: Ganti "_loadUserData()" dengan nama fungsi yang biasa
+              // kamu pakai di dashboard.dart untuk mengambil nama dari SharedPreferences.
+              // Kalau namanya getUserData(), ya tulis getUserData() ).
+            });
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: const Color.fromARGB(255, 48, 126, 199),
+                width: 3,
               ),
-            ],
-          ),
-          child: const CircleAvatar(
-            radius: 24,
-            backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=11'),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            // child: const CircleAvatar(
+            //   radius: 24,
+            //   backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=11'),
+            // ),
+            child: CircleAvatar(
+              radius: 24,
+              backgroundColor: Colors.white,
+              child: Text(
+                userName.isNotEmpty ? userName[0].toUpperCase() : 'Z',
+                style: const TextStyle(
+                  color: Color.fromARGB(255, 53, 146, 228),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ),
           ),
         ),
       ],
@@ -288,7 +355,7 @@ class _DashboardPageState extends State<DashboardPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Halo $userName 👋',
+          'Halo $userName',
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w800,
@@ -299,10 +366,7 @@ class _DashboardPageState extends State<DashboardPage> {
         const SizedBox(height: 6),
         Text(
           'Siap produktif hari ini? Jangan lupa absen ya.',
-          style: TextStyle(
-            color: Colors.grey.shade600,
-            fontSize: 15,
-          ),
+          style: TextStyle(color: Colors.grey.shade600, fontSize: 15),
         ),
       ],
     );
@@ -334,56 +398,73 @@ class _DashboardPageState extends State<DashboardPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Status Kehadiran',
-                style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  today,
-                  style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
+  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  children: [
+    Text(
+      'Status Kehadiran',
+      style: TextStyle(
+        color: Colors.white.withOpacity(0.9),
+        fontSize: 14, // 🔥 Font diperkecil dari 16 menjadi 14
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+    Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8, // 🔥 Padding kiri-kanan diperkecil dari 12 menjadi 8
+        vertical: 4,   // 🔥 Padding atas-bawah diperkecil dari 6 menjadi 4
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        today,
+        style: const TextStyle(
+          color: Colors.white70,
+          fontSize: 10, // 🔥 Font tanggal diperkecil dari 12 menjadi 10
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    ),
+  ],
+),
+          const SizedBox(height: 16), // 🔥 Jarak di atas kotak diperkecil dari 24 ke 16
           isFetchingToday
               ? const SizedBox(
-                  height: 90,
-                  child: Center(child: CircularProgressIndicator(color: Colors.white)),
+                  height: 70, // 🔥 Tinggi loading indicator diperkecil dari 90 ke 70
+                  child: Center(
+                    child: CircularProgressIndicator(color: Colors.white),
+                  ),
                 )
               : Row(
                   children: [
                     Expanded(
                       child: _infoCard(
                         title: 'Masuk',
-                        value: absensiHariIni?.jamMasuk?.substring(0, 5) ?? '--:--',
+                        value:
+                            absensiHariIni?.jamMasuk?.substring(0, 5) ??
+                            '--:--',
                         icon: Icons.login_rounded,
                         color: const Color(0xFF10B981), // Tailwind Emerald 500
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 20), // 🔥 Jarak antar kotak diperkecil dari 16 ke 12
                     Expanded(
                       child: _infoCard(
                         title: 'Pulang',
-                        value: absensiHariIni?.jamPulang?.substring(0, 5) ?? '--:--',
+                        value:
+                            absensiHariIni?.jamPulang?.substring(0, 5) ??
+                            '--:--',
                         icon: Icons.logout_rounded,
                         color: const Color(0xFFEF4444), // Tailwind Red 500
                       ),
                     ),
                   ],
                 ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 20), // 🔥 Jarak sebelum tombol absen diperkecil dari 28 ke 20
           SizedBox(
             width: double.infinity,
-            height: 56,
+            height: 48, // 🔥 Tinggi tombol diperkecil dari 56 ke 48
             child: ElevatedButton(
               onPressed: _sudahPulang ? null : _goToAbsen,
               style: ElevatedButton.styleFrom(
@@ -391,17 +472,18 @@ class _DashboardPageState extends State<DashboardPage> {
                 disabledBackgroundColor: Colors.white.withOpacity(0.1),
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(12), // 🔥 Sudut tombol sedikit dipertajam dari 16 ke 12
                 ),
               ),
               child: Text(
                 _buttonLabel,
                 style: TextStyle(
-                  // color: _sudahPulang ? Colors.white50 : Colors.white,
-                  color: _sudahPulang ? const Color.fromARGB(162, 150, 252, 194) : const Color.fromARGB(136, 196, 255, 225),
+                  color: _sudahPulang
+                      ? const Color.fromARGB(162, 150, 252, 194)
+                      : const Color.fromARGB(255, 255, 255, 255), // 🔥 Warna diubah jadi putih terang agar lebih kontras
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1,
-                  fontSize: 15,
+                  fontSize: 13, // 🔥 Font tombol diperkecil dari 15 ke 13
                 ),
               ),
             ),
@@ -435,7 +517,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 title: 'Hadir',
                 value: totalHadir.toString(),
                 icon: Icons.check_circle_rounded,
-                color: const Color(0xFF10B981),
+                color: const Color.fromARGB(255, 34, 110, 192),
               ),
             ),
             const SizedBox(width: 16),
@@ -444,7 +526,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 title: 'Izin',
                 value: totalIzin.toString(),
                 icon: Icons.assignment_rounded,
-                color: const Color(0xFFF59E0B),
+                color: const Color.fromARGB(255, 34, 110, 192),
               ),
             ),
             const SizedBox(width: 16),
@@ -453,7 +535,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 title: 'Telat',
                 value: totalTerlambat.toString(),
                 icon: Icons.timer_rounded,
-                color: const Color(0xFFEF4444),
+                color: const Color.fromARGB(255, 34, 110, 192),
               ),
             ),
           ],
@@ -465,12 +547,15 @@ class _DashboardPageState extends State<DashboardPage> {
   // ================================
   // BOTTOM NAV (FIXED BUG TEKS HILANG)
   // ================================
+  // ================================
+  // BOTTOM NAV (UPDATED: LOGBOOK)
+  // ================================
   Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -482,34 +567,70 @@ class _DashboardPageState extends State<DashboardPage> {
         selectedItemColor: primaryDark,
         unselectedItemColor: Colors.grey.shade400,
         showUnselectedLabels: true,
-        type: BottomNavigationBarType.fixed, // Penting agar teks tidak hilang
+        type: BottomNavigationBarType.fixed,
         elevation: 0,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+        selectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.w500,
+          fontSize: 12,
+        ),
         onTap: (index) {
           setState(() {
             _currentIndex = index;
           });
 
-          // Index 1 adalah menu Tugas
+          // Index 1: Tugas
           if (index == 1) {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const TugasPage()),
             );
           }
-          
-          // Index 2 adalah menu Riwayat
-          if (index == 2) {
-            _goToAbsen(); 
+          // Index 2: Logbook
+          else if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const LogbookPage()),
+            ); // Kita buat filenya di bawah
+          }
+          // Index 3: Riwayat
+          else if (index == 3) {
+            _goToAbsen();
           }
         },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.assignment_outlined), label: 'Tugas'),
-          BottomNavigationBarItem(icon: Icon(Icons.history_rounded), label: 'Riwayat'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline_rounded), label: 'Profil'),
-        ],
+  BottomNavigationBarItem(
+    icon: Icon(
+      Icons.home_rounded,
+      color: Color.fromARGB(255, 4, 54, 108),
+    ),
+    label: 'Home',
+  ),
+  BottomNavigationBarItem(
+    icon: Icon(
+      Icons.assignment_outlined,
+      color: Color.fromARGB(255, 4, 54, 108),
+    ),
+    label: 'Tugas',
+  ),
+  BottomNavigationBarItem(
+    icon: Icon(
+      Icons.menu_book_rounded,
+      color: Color.fromARGB(255, 4, 54, 108),
+    ),
+    label: 'Logbook',
+  ),
+  BottomNavigationBarItem(
+    icon: Icon(
+      Icons.history_rounded,
+      color: Color.fromARGB(255, 4, 54, 108),
+    ),
+    label: 'Riwayat',
+  ),
+],
       ),
     );
   }
@@ -575,13 +696,13 @@ class _DashboardPageState extends State<DashboardPage> {
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+      // 🔥 1. Padding atas-bawah dikurangi dari 20 menjadi 12
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20), // Sedikit disesuaikan agar tidak terlalu membulat
         boxShadow: [
           BoxShadow(
-            // color: Colors.slate.shade900.withOpacity(0.04), // Soft shadow
             color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 15,
             offset: const Offset(0, 8),
@@ -589,31 +710,32 @@ class _DashboardPageState extends State<DashboardPage> {
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min, // 🔥 2. WAJIB DITAMBAHKAN agar tinggi Column mengikuti isinya saja
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(8), // 🔥 3. Padding ikon dikurangi dari 10 ke 8
             decoration: BoxDecoration(
               color: color.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: color, size: 24),
+            child: Icon(icon, color: color, size: 20), // 🔥 4. Ukuran ikon diperkecil dari 24 ke 20
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 8), // 🔥 5. Jarak ke angka diperkecil dari 14 ke 8
           Text(
             value,
             style: TextStyle(
-              fontSize: 26,
+              fontSize: 20, // 🔥 6. Ukuran angka diperkecil dari 26 ke 20
               fontWeight: FontWeight.w800,
               color: primaryDark,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2), // 🔥 7. Jarak ke tulisan diperkecil dari 4 ke 2
           Text(
             title,
             style: TextStyle(
               color: Colors.grey.shade500,
               fontWeight: FontWeight.w600,
-              fontSize: 13,
+              fontSize: 12, // 🔥 8. Ukuran teks diperkecil dari 13 ke 11
             ),
           ),
         ],

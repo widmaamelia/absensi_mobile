@@ -75,11 +75,17 @@ class _LoginPageState extends State<LoginPage> {
           token,
         );
 
-        // SAVE USER NAME
+        // SAVE USER DATA (NAMA & EMAIL)
         if (data['user'] != null) {
           await prefs.setString(
             'user_name',
             data['user']['name'] ?? '',
+          );
+          
+          // 🔥 TAMBAHKAN BARIS INI UNTUK MENYIMPAN EMAIL
+          await prefs.setString(
+            'user_email',
+            data['user']['email'] ?? '',
           );
         }
 
