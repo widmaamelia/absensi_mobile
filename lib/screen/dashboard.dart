@@ -173,7 +173,9 @@ class _DashboardPageState extends State<DashboardPage> {
   // ================================
   @override
   Widget build(BuildContext context) {
-    final today = DateFormat('dd MMMM yyyy').format(DateTime.now());
+    final today = (absensiHariIni?.tanggal != null && absensiHariIni!.tanggal!.isNotEmpty)
+      ? DateFormat('dd MMMM yyyy').format(DateTime.parse(absensiHariIni!.tanggal!))
+      : DateFormat('dd MMMM yyyy').format(DateTime.now());
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -522,6 +524,8 @@ class _DashboardPageState extends State<DashboardPage> {
     required String value,
     required IconData icon,
     required Color color,
+    String? badge,
+    Color? badgeColor,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -560,6 +564,24 @@ class _DashboardPageState extends State<DashboardPage> {
               letterSpacing: 0.5,
             ),
           ),
+          if (badge != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: (badgeColor ?? Colors.white).withOpacity(0.15),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Text(
+                badge,
+                style: TextStyle(
+                  color: badgeColor ?? Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

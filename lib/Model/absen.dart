@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 class AbsensiModel {
   final int? id;
   final int? userId;
@@ -49,6 +51,82 @@ class AbsensiModel {
     );
   }
 
+  AbsensiModel copyWith({
+    int? id,
+    int? userId,
+    String? tanggal,
+    String? jamMasuk,
+    String? jamPulang,
+    double? latitudeMasuk,
+    double? longitudeMasuk,
+    double? latitudePulang,
+    double? longitudePulang,
+    String? statusKehadiran,
+    String? statusKedatangan,
+  }) {
+    return AbsensiModel(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      tanggal: tanggal ?? this.tanggal,
+      jamMasuk: jamMasuk ?? this.jamMasuk,
+      jamPulang: jamPulang ?? this.jamPulang,
+      latitudeMasuk: latitudeMasuk ?? this.latitudeMasuk,
+      longitudeMasuk: longitudeMasuk ?? this.longitudeMasuk,
+      latitudePulang: latitudePulang ?? this.latitudePulang,
+      longitudePulang: longitudePulang ?? this.longitudePulang,
+      statusKehadiran: statusKehadiran ?? this.statusKehadiran,
+      statusKedatangan: statusKedatangan ?? this.statusKedatangan,
+    );
+  }
+
+  /// Formatted tanggal (Indonesian) e.g. "Rabu, 3 Juni 2026"
+  String get formattedTanggal {
+    try {
+      if (tanggal == null || tanggal!.isEmpty) return '';
+      final dt = DateTime.parse(tanggal!);
+      final days = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'];
+      final months = [
+        'Januari','Februari','Maret','April','Mei','Juni',
+        'Juli','Agustus','September','Oktober','November','Desember'
+      ];
+      final dayName = days[dt.weekday - 1];
+      final monthName = months[dt.month - 1];
+      return '$dayName, ${dt.day} $monthName ${dt.year}';
+    } catch (_) {
+      return tanggal ?? '';
+    }
+  }
+
+  /// Formatted jam (HH:mm) from jamMasuk / jamPulang if present
+  String formattedJamMasuk() {
+    try {
+      if (jamMasuk == null || jamMasuk!.isEmpty) return '';
+      if (jamMasuk!.length >= 5) return jamMasuk!.substring(0, 5);
+      return jamMasuk!;
+    } catch (_) {
+      return jamMasuk ?? '';
+    }
+  }
+
+  String formattedJamPulang() {
+    try {
+      if (jamPulang == null || jamPulang!.isEmpty) return '';
+      if (jamPulang!.length >= 5) return jamPulang!.substring(0, 5);
+      return jamPulang!;
+    } catch (_) {
+      return jamPulang ?? '';
+    }
+  }
+
   bool get sudahMasuk => jamMasuk != null;
   bool get sudahPulang => jamPulang != null;
+
+  /// Returns true when the attendance arrival status indicates late.
+  /// Handles common server values like 'terlambat' or 'late' (case-insensitive).
+  bool get isTerlambat {
+    final s = statusKedatangan;
+    if (s == null) return false;
+    final lower = s.toLowerCase();
+    return lower.contains('terlambat') || lower.contains('late');
+  }
 }

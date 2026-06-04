@@ -8,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 
 import '../Model/absen.dart';
 import '../config/api_config.dart';
@@ -125,7 +126,14 @@ class _AbsenPageState extends State<AbsenPage>
         final data = jsonDecode(response.body);
 
         if (data['data'] != null) {
-          final absensi = AbsensiModel.fromJson(data['data']);
+          var absensi = AbsensiModel.fromJson(data['data']);
+
+          // Jika server tidak mengembalikan tanggal, gunakan tanggal perangkat
+          if (absensi.tanggal == null || absensi.tanggal!.isEmpty) {
+            final now = DateTime.now();
+            final deviceDate = DateFormat('yyyy-MM-dd').format(now);
+            absensi = absensi.copyWith(tanggal: deviceDate);
+          }
 
           setState(() {
             absensiHariIni = absensi;
@@ -213,7 +221,25 @@ class _AbsenPageState extends State<AbsenPage>
       final data = jsonDecode(response.body);
 
       if (data['success'] == true) {
-        final absensi = AbsensiModel.fromJson(data['data']);
+        var absensi = AbsensiModel.fromJson(data['data']);
+
+        // Pastikan kita menyimpan tanggal/jam berdasarkan waktu perangkat
+        final now = DateTime.now();
+        final deviceDate = DateFormat('yyyy-MM-dd').format(now);
+        final deviceTime = DateFormat('HH:mm:ss').format(now);
+
+        if (absensi.tanggal == null || absensi.tanggal!.isEmpty) {
+          absensi = absensi.copyWith(tanggal: deviceDate);
+        }
+        if (absensi.jamMasuk == null || absensi.jamMasuk!.isEmpty) {
+          absensi = absensi.copyWith(jamMasuk: deviceTime);
+        }
+        if (absensi.jamPulang == null || absensi.jamPulang!.isEmpty) {
+          // Jangan overwrite jam pulang kecuali server mengembalikan kosong
+          // (biasanya jam pulang dikirim setelah absen pulang)
+          // absensi = absensi.copyWith(jamPulang: deviceTime);
+        }
+
         setState(() {
           absensiHariIni = absensi;
           if (absensi.latitudeMasuk != null && absensi.longitudeMasuk != null) {
@@ -300,6 +326,21 @@ class _AbsenPageState extends State<AbsenPage>
   bool get _buttonEnabled => !_sudahPulang && !isLoading;
 
   String _formattedToday() {
+    // Prefer tanggal dari server/absensi yang bisa saja sudah berisi nilai.
+    if (absensiHariIni?.tanggal != null && absensiHariIni!.tanggal!.isNotEmpty) {
+      try {
+        final dt = DateTime.parse(absensiHariIni!.tanggal!);
+        const months = [
+          'Januari','Februari','Maret','April','Mei','Juni',
+          'Juli','Agustus','September','Oktober','November','Desember'
+        ];
+        const days = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'];
+        return '${days[dt.weekday - 1]}, ${dt.day} ${months[dt.month - 1]} ${dt.year}';
+      } catch (_) {
+        // fallback to device date below
+      }
+    }
+
     final now = DateTime.now();
     const months = [
       'Januari','Februari','Maret','April','Mei','Juni',
@@ -310,12 +351,14 @@ class _AbsenPageState extends State<AbsenPage>
   }
 
   Color get _statusBadgeColor {
+    if (absensiHariIni?.isTerlambat == true) return _red;
     if (_sudahPulang) return _amber;
     if (_sudahMasuk)  return _green;
     return _textSec;
   }
 
   String get _statusBadgeText {
+    if (absensiHariIni?.isTerlambat == true) return 'Terlambat';
     if (_sudahPulang) return 'Selesai';
     if (_sudahMasuk)  return 'Aktif';
     return 'Belum Absen';
@@ -586,6 +629,7 @@ class _AbsenPageState extends State<AbsenPage>
                       value: absensiHariIni?.jamMasuk?.substring(0, 5) ?? '--:--',
                       icon:  Icons.login_rounded,
                       color: _green,
+                      statusText: absensiHariIni?.isTerlambat == true ? _statusBadgeText : null,
                     )),
                     const SizedBox(width: 12),
                     Expanded(child: _buildTimeChip(
@@ -609,6 +653,7 @@ class _AbsenPageState extends State<AbsenPage>
     required String value,
     required IconData icon,
     required Color color,
+    String? statusText,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -645,6 +690,24 @@ class _AbsenPageState extends State<AbsenPage>
               letterSpacing: -1,
             ),
           ),
+          if (statusText != null && statusText.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                statusText,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
