@@ -181,7 +181,7 @@ class _LoginPageState extends State<LoginPage> {
                           height: 110,
                           width: 110,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Colors.blue,
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
@@ -194,7 +194,7 @@ class _LoginPageState extends State<LoginPage> {
                           child: Padding(
                             padding: const EdgeInsets.all(20),
                             child: Image.asset(
-                              'assets/Logo Mediatama.png', // Pastikan nama aset benar
+                              'assets/ogo.jpg', // Pastikan nama aset benar
                               fit: BoxFit.contain,
                             ),
                           ),
@@ -211,7 +211,7 @@ class _LoginPageState extends State<LoginPage> {
                       child: Column(
                         children: [
                           Text(
-                            'InternTrack',
+                            'SIMAGANG',
                             style: TextStyle(
                               fontSize: 38,
                               fontWeight: FontWeight.w900,
@@ -221,7 +221,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Monitoring Magang Jadi Lebih Mudah',
+                            'Sistem Manajemen Magang Mediatama',
                             style: TextStyle(
                               color: textMuted,
                               fontSize: 15,
