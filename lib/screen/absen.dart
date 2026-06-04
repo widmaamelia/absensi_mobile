@@ -44,8 +44,8 @@ class _AbsenPageState extends State<AbsenPage>
 static const Color _surface     = Color(0xFFFFFFFF); // card
 static const Color _surfaceHigh = Color(0xFFF1F5F9); // card sekunder
 
-static const Color _accent      = Color(0xFF4F46E5); // indigo
-static const Color _accentSoft  = Color(0xFF6366F1);
+static const Color _accent      = Color.fromARGB(255, 70, 187, 229); // indigo
+static const Color _accentSoft  = Color.fromARGB(255, 99, 201, 241);
 static const Color _accentGlow  = Color(0x334F46E5);
 
 static const Color _textPri     = Color(0xFF0F172A); // teks utama
