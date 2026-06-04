@@ -266,8 +266,29 @@ class _TugasPageState extends State<TugasPage> {
   // ================================
   // TASK CARD WIDGET (Versi Compact + Format Waktu Rapi)
   // ================================
+  // ================================
+  // TASK CARD WIDGET (Logika Status Diperbaiki)
+  // ================================
   Widget _buildTaskCard(dynamic tugas) {
-    bool isSelesai = tugas['is_submitted'] == true;
+    // 1. Cek apakah anak magang sudah mengumpulkan
+    // bool isSubmitted = tugas['is_submitted'] == true;
+    
+    // // 2. Cek apakah mentor sudah menilai
+    // // 🔥 PERHATIAN: Saya menggunakan asumsi bahwa Laravel mengirimkan data 'nilai'.
+    // bool isDinilai = tugas['nilai'] != null && tugas['nilai'].toString().isNotEmpty; 
+
+    // bool adaMateri = tugas['file_materi'] != null;
+
+
+
+    bool isSubmitted = tugas['is_submitted'] == true;
+    
+    // 2. 🔥 PERBAIKAN: Masuk ke dalam 'submission' dulu untuk mencari nilai!
+    bool isDinilai = false;
+    if (tugas['submission'] != null) {
+      isDinilai = tugas['submission']['nilai'] != null && tugas['submission']['nilai'].toString().isNotEmpty; 
+    }
+
     bool adaMateri = tugas['file_materi'] != null;
 
     // --- LOGIC FORMAT WAKTU ---
@@ -275,16 +296,22 @@ class _TugasPageState extends State<TugasPage> {
     if (tugas['deadline'] != null) {
       try {
         DateTime parsedDate = DateTime.parse(tugas['deadline']);
-        // Mengubah ke format: 10 Jun 2026, 11:25
         formattedDeadline = DateFormat('dd MMM yyyy, HH:mm').format(parsedDate);
       } catch (e) {
-        // Jika gagal, tampilkan teks asli dari database
         formattedDeadline = tugas['deadline'];
       }
     }
 
-    
-    return InkWell( // Tambahkan InkWell di sini
+    // --- LOGIC WARNA & TEKS BERDASARKAN 3 STATUS ---
+    String badgeText = isDinilai ? 'Selesai' : (isSubmitted ? 'Menunggu' : 'Belum');
+    Color badgeColor = isDinilai 
+        ? const Color(0xFF10B981) // Hijau jika dinilai
+        : (isSubmitted ? accentBlue : const Color(0xFFF59E0B)); // Biru jika nunggu, Kuning jika belum
+        
+    String btnText = isDinilai ? 'Dinilai' : (isSubmitted ? 'Terkumpul' : 'Kumpul');
+    bool isButtonDisabled = isSubmitted || isDinilai; // Tombol mati kalau sudah dikumpul atau dinilai
+
+    return InkWell( 
       onTap: () {
         Navigator.push(
           context,
@@ -294,221 +321,213 @@ class _TugasPageState extends State<TugasPage> {
       borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: const EdgeInsets.all(20),
-        // ... (sisanya kodingan Container yang lama kamu)
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [cardDark, primaryDark],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [cardDark, primaryDark],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: primaryDark.withValues(alpha: 0.15), 
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: primaryDark.withValues(alpha: 0.15), 
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // BARIS 1: Icon, Judul/Deskripsi, & Badge
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // GLOWING ICON
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isSelesai 
-                      ? const Color(0xFF10B981).withValues(alpha: 0.15) 
-                      : accentCyan.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: isSelesai ? const Color(0xFF10B981).withValues(alpha: 0.3) : accentCyan.withValues(alpha: 0.3),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // BARIS 1: Icon, Judul/Deskripsi, & Badge
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // GLOWING ICON
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: badgeColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: badgeColor.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Icon(
+                    isDinilai ? Icons.task_alt_rounded : (isSubmitted ? Icons.hourglass_top_rounded : Icons.code_rounded),
+                    color: badgeColor,
+                    size: 20,
                   ),
                 ),
-                child: Icon(
-                  isSelesai ? Icons.task_alt_rounded : Icons.code_rounded,
-                  color: isSelesai ? const Color(0xFF34D399) : accentCyan,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 14),
-              
-              // TITLE & DESC
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      tugas['judul_tugas'] ?? 'Tanpa Judul',
-                      maxLines: 1, 
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      tugas['deskripsi_tugas'] ?? 'Tidak ada deskripsi',
-                      maxLines: 1, 
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: textMuted,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              
-              // STATUS BADGE
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: isSelesai 
-                      ? const Color(0xFF10B981).withValues(alpha: 0.15)
-                      : const Color(0xFFF59E0B).withValues(alpha: 0.15), 
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: isSelesai ? const Color(0xFF10B981).withValues(alpha: 0.2) : const Color(0xFFF59E0B).withValues(alpha: 0.2),
-                  ),
-                ),
-                child: Text(
-                  isSelesai ? 'Selesai' : 'Belum',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.5,
-                    color: isSelesai ? const Color(0xFF34D399) : const Color(0xFFFBBF24),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // BARIS 2: Deadline, Materi & Tombol Kumpul
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 12,
-                  runSpacing: 8,
-                  children: [
-                    // DEADLINE (Menggunakan variabel formattedDeadline)
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.timer_outlined, size: 14, color: textMuted),
-                        const SizedBox(width: 4),
-                        Text(
-                          formattedDeadline, // <-- Perubahan di sini
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                    
-                    // TOMBOL MATERI
-                    if (adaMateri)
-                      InkWell(
-                        onTap: () async {
-                          // Karena Laravel menyimpannya di folder 'public', URL-nya biasanya begini:
-                          final String namaFile = tugas['file_materi'];
-                          final Uri url = Uri.parse('http://192.168.100.172:8000/storage/$namaFile');
-                          
-                          if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Tidak bisa membuka file materi')),
-                            );
-                          }
-                        },
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.download_rounded, size: 14, color: accentCyan),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Materi',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: accentCyan,
-                              ),
-                            ),
-                          ],
+                const SizedBox(width: 14),
+                
+                // TITLE & DESC
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        tugas['judul_tugas'] ?? 'Tanpa Judul',
+                        maxLines: 1, 
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: 0.2,
                         ),
                       ),
-                  ],
-                ),
-              ),
-              
-              const SizedBox(width: 8),
-
-              // TOMBOL KUMPUL
-              Container(
-                height: 38,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: isSelesai 
-                        ? [Colors.white.withValues(alpha: 0.1), Colors.white.withValues(alpha: 0.05)]
-                        : [accentBlue, accentCyan],
+                      const SizedBox(height: 4),
+                      Text(
+                        tugas['deskripsi_tugas'] ?? 'Tidak ada deskripsi',
+                        maxLines: 1, 
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: textMuted,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: isSelesai ? [] : [
-                    BoxShadow(
-                      color: accentBlue.withValues(alpha: 0.4),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    )
-                  ],
                 ),
-                child: ElevatedButton(
-                  // Panggil fungsi _kumpulTugas sambil membawa ID tugasnya
-                  onPressed: isSelesai ? null : () => _kumpulTugas(tugas['id']),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    disabledBackgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                const SizedBox(width: 10),
+                
+                // STATUS BADGE
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: badgeColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: badgeColor.withValues(alpha: 0.2),
                     ),
                   ),
                   child: Text(
-                    isSelesai ? 'Dinilai' : 'Kumpul',
+                    badgeText,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 10,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.5,
-                      color: isSelesai ? textMuted : Colors.white,
+                      color: badgeColor,
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // BARIS 2: Deadline, Materi & Tombol Kumpul
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 12,
+                    runSpacing: 8,
+                    children: [
+                      // DEADLINE
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.timer_outlined, size: 14, color: textMuted),
+                          const SizedBox(width: 4),
+                          Text(
+                            formattedDeadline, 
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                      
+                      // TOMBOL MATERI
+                      if (adaMateri)
+                        InkWell(
+                          onTap: () async {
+                            final String namaFile = tugas['file_materi'];
+                            final Uri url = Uri.parse('http://192.168.100.172:8000/storage/$namaFile');
+                            
+                            if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Tidak bisa membuka file materi')),
+                              );
+                            }
+                          },
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.download_rounded, size: 14, color: accentCyan),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Materi',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: accentCyan,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(width: 8),
+
+                // TOMBOL KUMPUL
+                Container(
+                  height: 38,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: isButtonDisabled 
+                          ? [Colors.white.withValues(alpha: 0.1), Colors.white.withValues(alpha: 0.05)]
+                          : [accentBlue, accentCyan],
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: isButtonDisabled ? [] : [
+                      BoxShadow(
+                        color: accentBlue.withValues(alpha: 0.4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      )
+                    ],
+                  ),
+                  child: ElevatedButton(
+                    onPressed: isButtonDisabled ? null : () => _kumpulTugas(tugas['id']),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      disabledBackgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(
+                      btnText,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                        color: isButtonDisabled ? textMuted : Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
-    )
     );
-    
   }
 }
 

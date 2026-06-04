@@ -459,7 +459,7 @@ class _ProfilPageState extends State<ProfilPage> {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: const Color.fromARGB(221, 28, 48, 93),
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20, offset: const Offset(0, 10))],
               ),
@@ -487,7 +487,7 @@ class _ProfilPageState extends State<ProfilPage> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: const Color.fromARGB(221, 28, 48, 93),
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20, offset: const Offset(0, 10))],
               ),
@@ -526,9 +526,9 @@ class _ProfilPageState extends State<ProfilPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: TextStyle(color: textMuted, fontSize: 12, fontWeight: FontWeight.w600)),
+              Text(title, style: TextStyle(color: const Color.fromARGB(255, 234, 234, 234), fontSize: 12, fontWeight: FontWeight.w600)),
               const SizedBox(height: 2),
-              Text(value, style: TextStyle(color: primaryDark, fontSize: 14, fontWeight: FontWeight.bold)),
+              Text(value, style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
             ],
           ),
         ),
@@ -537,7 +537,11 @@ class _ProfilPageState extends State<ProfilPage> {
   }
 
   Widget _buildMenuTile(IconData icon, String title, VoidCallback onTap, {bool isDanger = false}) {
-    final Color itemColor = isDanger ? const Color(0xFFEF4444) : primaryDark;
+    // 1. Warna untuk Ikon: Merah jika isDanger (Keluar), Gelap (primaryDark) jika menu biasa
+    final Color iconColor = isDanger ? const Color(0xFFEF4444) : const Color.fromARGB(255, 70, 95, 155);
+    
+    // 2. Warna untuk Teks: Merah jika isDanger (Keluar), Putih jika menu biasa
+    final Color textColor = isDanger ? const Color(0xFFEF4444) : Colors.white;
     
     return ListTile(
       onTap: onTap,
@@ -547,10 +551,14 @@ class _ProfilPageState extends State<ProfilPage> {
           color: isDanger ? const Color(0xFFEF4444).withValues(alpha: 0.1) : bgColor,
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon, color: itemColor, size: 20),
+        // Ikon menggunakan iconColor (gelap)
+        child: Icon(icon, color: iconColor, size: 20),
       ),
-      title: Text(title, style: TextStyle(color: itemColor, fontWeight: FontWeight.bold, fontSize: 14)),
-      trailing: isDanger ? null : Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey.shade400),
+      // Teks menggunakan textColor (putih)
+      title: Text(title, style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 14)),
+      
+      // Opsional: Panah ke kanan juga diubah jadi Colors.white70 biar kelihatan jelas di background gelap
+      trailing: isDanger ? null : const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.white70),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     );
   }

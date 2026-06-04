@@ -204,7 +204,7 @@ class _DashboardPageState extends State<DashboardPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _FadeInSlide(delay: 0, child: _buildHeader()),
-                const SizedBox(height: 32),
+                const SizedBox(height: 10),
                 _FadeInSlide(delay: 100, child: _buildGreeting()),
                 const SizedBox(height: 28),
                 _FadeInSlide(delay: 200, child: _buildAbsensiCard(today)),
@@ -225,51 +225,76 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start, // 🔥 Tambahkan ini agar ditarik sejajar ke atas
       children: [
-        Row(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start, 
           children: [
-            Container(
-  padding: const EdgeInsets.all(12),
-  decoration: BoxDecoration(
-    color: Colors.blue, // 🔥 Gradien dihapus, diganti jadi warna putih solid
-    borderRadius: BorderRadius.circular(16),
-    boxShadow: [
-      BoxShadow(
-        color: bgColor.withOpacity(0.2), 
-        blurRadius: 8,
-        offset: const Offset(0, 4),
-      ),
-    ],
-  ),
-  child: Image.asset( 
-    'assets/ogo.jpg',
-    width: 25,
-    height: 25,
+            // 🔥 SizedBox yang ada di atas teks 'Halo' dihapus agar tidak mendorong teks ke bawah
+            Text(
+              'Halo $userName',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+                color: primaryDark,
+                letterSpacing: -0.5,
               ),
             ),
-            const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'SIMAGANG',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: primaryDark,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                Text(
-                  'Monitoring Magang',
-                  style: TextStyle(
-                    color: Colors.grey.shade500,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+            const SizedBox(height: 6),
+            Text(
+              'Siap Produktif hari ini?',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 15),
             ),
+            const SizedBox(height: 6),
+            Text(
+              'Jangan lupa absen hari ini ya. 😊',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 15),
+            ),
+        
+            
+  //           Container(
+  // // padding: const EdgeInsets.all(12),
+  // // decoration: BoxDecoration(
+  // //   color: Colors.blue, // 🔥 Gradien dihapus, diganti jadi warna putih solid
+  // //   borderRadius: BorderRadius.circular(16),
+  // //   boxShadow: [
+  // //     BoxShadow(
+  // //       color: bgColor.withOpacity(0.2), 
+  // //       blurRadius: 8,
+  // //       offset: const Offset(0, 4),
+  // //     ),
+  // //   ],
+  // // ),
+  // // child: 
+  // // Image.asset( 
+  // //   'assets/ogo.jpg',
+  // //   width: 25,
+  // //   height: 25,
+  // //             ),
+  //           ),
+            // const SizedBox(width: 16),
+            // Column(
+            //   crossAxisAlignment: CrossAxisAlignment.start,
+            //   children: [
+            //     Text(
+            //       'SIMAGANG',
+            //       style: TextStyle(
+            //         fontSize: 20,
+            //         fontWeight: FontWeight.w800,
+            //         color: primaryDark,
+            //         letterSpacing: -0.5,
+            //       ),
+            //     ),
+            //     Text(
+            //       'Monitoring Magang',
+            //       style: TextStyle(
+            //         color: Colors.grey.shade500,
+            //         fontSize: 13,
+            //         fontWeight: FontWeight.w500,
+            //       ),
+            //     ),
+            //   ],
+            // ),
           ],
         ),
         // Container(
@@ -353,22 +378,22 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildGreeting() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Halo $userName',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.w800,
-            color: primaryDark,
-            letterSpacing: -0.5,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Siap produktif hari ini? Jangan lupa absen ya.',
-          style: TextStyle(color: Colors.grey.shade600, fontSize: 15),
-        ),
-      ],
+      // children: [
+      //   Text(
+      //     'Halo $userName',
+      //     style: TextStyle(
+      //       fontSize: 28,
+      //       fontWeight: FontWeight.w800,
+      //       color: primaryDark,
+      //       letterSpacing: -0.5,
+      //     ),
+      //   ),
+      //   const SizedBox(height: 6),
+      //   Text(
+      //     'Siap produktif hari ini? Jangan lupa absen ya.',
+      //     style: TextStyle(color: Colors.grey.shade600, fontSize: 15),
+      //   ),
+      // ],
     );
   }
 
@@ -597,9 +622,9 @@ class _DashboardPageState extends State<DashboardPage> {
             ); // Kita buat filenya di bawah
           }
           // Index 3: Riwayat
-          else if (index == 3) {
-            _goToAbsen();
-          }
+          // else if (index == 3) {
+          //   _goToAbsen();
+          // }
         },
         items: const [
   BottomNavigationBarItem(
@@ -623,13 +648,13 @@ class _DashboardPageState extends State<DashboardPage> {
     ),
     label: 'Logbook',
   ),
-  BottomNavigationBarItem(
-    icon: Icon(
-      Icons.history_rounded,
-      color: Color.fromARGB(255, 4, 54, 108),
-    ),
-    label: 'Riwayat',
-  ),
+  // BottomNavigationBarItem(
+  //   icon: Icon(
+  //     Icons.history_rounded,
+  //     color: Color.fromARGB(255, 4, 54, 108),
+  //   ),
+  //   label: 'Riwayat',
+  // ),
 ],
       ),
     );
