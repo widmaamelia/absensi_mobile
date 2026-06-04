@@ -16,11 +16,7 @@ class ApiConfig {
     }
 
     // WIFI / LARAVEL LOCAL
-<<<<<<< HEAD
     return 'http://172.28.52.111:8000';
-=======
-    return 'http://192.168.100.172:8000';
->>>>>>> 5431c080f84f3bc30539612d21975d0b70d9c6cf
   }
 
   static String get logbook => '$apiUrl/logbooks';
