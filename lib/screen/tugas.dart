@@ -295,7 +295,8 @@ class _TugasPageState extends State<TugasPage> {
     String formattedDeadline = '-';
     if (tugas['deadline'] != null) {
       try {
-        DateTime parsedDate = DateTime.parse(tugas['deadline']);
+        // 🔥 Tambahkan .toLocal() agar jamnya kembali ke waktu WIB
+        DateTime parsedDate = DateTime.parse(tugas['deadline']).toLocal(); 
         formattedDeadline = DateFormat('dd MMM yyyy, HH:mm').format(parsedDate);
       } catch (e) {
         formattedDeadline = tugas['deadline'];

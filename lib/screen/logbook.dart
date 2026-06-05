@@ -19,7 +19,7 @@ class LogbookPage extends StatefulWidget {
 class _LogbookPageState extends State<LogbookPage> {
   final Color primaryDark = const Color(0xFF0F172A);
   final Color bgColor = const Color.fromARGB(255, 233, 244, 255);
-  final Color accentBlue = const Color(0xFF3B82F6);
+  final Color accentBlue = const Color.fromARGB(255, 25, 75, 155);
 
   List<dynamic> logbooks = [];
   bool isLoading = true;
@@ -160,15 +160,31 @@ class _LogbookPageState extends State<LogbookPage> {
       statusIcon = Icons.hourglass_top_rounded;
     }
 
+    // String formattedDate = '-';
+    // if (logbook['tanggal'] != null) {
+    //   formattedDate = DateFormat('dd MMM yyyy').format(DateTime.parse(logbook['tanggal']).toLocal());
+    // }
+
     String formattedDate = '-';
     if (logbook['tanggal'] != null) {
-      formattedDate = DateFormat('dd MMM yyyy').format(DateTime.parse(logbook['tanggal']).toLocal());
+      try {
+        String dbDate = logbook['tanggal'];
+        if (!dbDate.endsWith('Z')) {
+          dbDate = '${dbDate}Z'; 
+        }
+        DateTime parsedDate = DateTime.parse(dbDate).toLocal(); 
+        
+        // 🔥 HAPUS ", HH:mm" KARENA LOGBOOK MEMANG HANYA MENGGUNAKAN TANGGAL
+        formattedDate = DateFormat('dd MMM yyyy').format(parsedDate);
+      } catch (e) {
+        formattedDate = logbook['tanggal'];
+      }
     }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 73, 106, 161), // Warna background pilihan Zukira
+        color: const Color.fromARGB(255, 53, 85, 139), // Warna background pilihan Zukira
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(

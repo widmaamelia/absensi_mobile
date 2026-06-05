@@ -279,24 +279,27 @@ class _LoginPageState extends State<LoginPage> {
                               },
                             ),
 
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton(
-                                onPressed: () {},
-                                style: TextButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                ),
-                                child: Text(
-                                  'Lupa Sandi?',
-                                  style: TextStyle(
-                                    color: primaryBlue,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
+                            // Align(
+                            //   alignment: Alignment.centerRight,
+                            //   child: 
+                            //   TextButton(
+                            //     onPressed: () {},
+                            //     style: 
+                            //     TextButton.styleFrom(
+                            //       padding: const EdgeInsets.symmetric(vertical: 6),
+                            //     ),
+                            //     child: 
+                            //     Text(
+                            //       '',
+                            //       style: TextStyle(
+                            //         color: primaryBlue,
+                            //         fontWeight: FontWeight.bold,
+                            //         fontSize: 3,
+                            //       ),
+                            //     ),
+                            //   ),
+                            // ),
+                            const SizedBox(height: 35),
 
                             // BUTTON LOGIN
                             _buildGradientButton(),
