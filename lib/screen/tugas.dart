@@ -61,7 +61,7 @@ class _TugasPageState extends State<TugasPage> {
 
         var request = http.MultipartRequest(
           'POST',
-          Uri.parse('http://192.168.100.172:8000/api/tasks/$taskId/submit'),
+          Uri.parse('http://172.28.52.111:8000/api/tasks/$taskId/submit'),
         );
         
         // Masukkan Token
@@ -111,7 +111,7 @@ class _TugasPageState extends State<TugasPage> {
       
       // PERBAIKAN 1: URL menggunakan /api/tasks sesuai route Laravel
       final response = await http.get(
-        Uri.parse('http://192.168.100.172:8000/api/tasks'), 
+        Uri.parse('http://172.28.52.111:8000/api/tasks'), 
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
@@ -452,7 +452,7 @@ class _TugasPageState extends State<TugasPage> {
                         InkWell(
                           onTap: () async {
                             final String namaFile = tugas['file_materi'];
-                            final Uri url = Uri.parse('http://192.168.100.172:8000/storage/$namaFile');
+                            final Uri url = Uri.parse('http://172.28.52.111:8000/storage/$namaFile');
                             
                             if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
                               ScaffoldMessenger.of(context).showSnackBar(

@@ -44,8 +44,8 @@ class _AbsenPageState extends State<AbsenPage>
 static const Color _surface     = Color(0xFFFFFFFF); // card
 static const Color _surfaceHigh = Color(0xFFF1F5F9); // card sekunder
 
-static const Color _accent      = Color.fromARGB(255, 70, 187, 229); // indigo
-static const Color _accentSoft  = Color.fromARGB(255, 99, 201, 241);
+static const Color _accent      = Color.fromARGB(255, 19, 124, 205); // indigo
+static const Color _accentSoft  = Color.fromARGB(255, 11, 49, 65);
 static const Color _accentGlow  = Color(0x334F46E5);
 
 static const Color _textPri     = Color(0xFF0F172A); // teks utama
@@ -839,49 +839,50 @@ static const Color _border      = Color(0xFFE2E8F0); // border terang
           ),
         ),
 
-        const SizedBox(width: 14),
+        const SizedBox(width: 0),
 
         Container(
-          width:  38,
-          height: 38,
-          decoration: BoxDecoration(
-            color:        _accent,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color:      _accentGlow,
-                blurRadius: 16,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
+          width:  5,
+          height: 5,
+          // decoration: BoxDecoration(
+          //   color:        _accent,
+          //   borderRadius: BorderRadius.circular(12),
+          //   boxShadow: [
+          //     BoxShadow(
+          //       color:      _accentGlow,
+          //       blurRadius: 16,
+          //       spreadRadius: 2,
+          //     ),
+          //   ],
+          // ),
           child: Padding(
             padding: const EdgeInsets.all(7),
-            child: Image.asset(
-              'assets/Logo Mediatama.png',
-              fit: BoxFit.contain,
-            ),
+            // child: Image.asset(
+            //   'assets/Logo Mediatama.png',
+            //   fit: BoxFit.contain,
+            // ),
           ),
         ),
 
-        const SizedBox(width: 12),
+        const SizedBox(width: 0),
 
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: const [
+            // Text(
+            //   'InternTrack',
+            //   style: TextStyle(
+            //     fontSize:   18,
+            //     fontWeight: FontWeight.w800,
+            //     color:      _textPri,
+            //     letterSpacing: -0.4,
+            //   ),
+            // ),
             Text(
-              'InternTrack',
+              'SISTEM ABSENSI',
               style: TextStyle(
-                fontSize:   18,
-                fontWeight: FontWeight.w800,
-                color:      _textPri,
-                letterSpacing: -0.4,
-              ),
-            ),
-            Text(
-              'Sistem Absensi',
-              style: TextStyle(
-                fontSize:  12,
+                fontSize:  15,
+                fontWeight: FontWeight.bold,
                 color:     _textSec,
                 letterSpacing: 0.2,
               ),
@@ -1263,7 +1264,7 @@ static const Color _border      = Color(0xFFE2E8F0); // border terang
           decoration: BoxDecoration(
             gradient: enabled
                 ? const LinearGradient(
-                    colors: [Color(0xFF6366F1), Color(0xFF818CF8)],
+                    colors: [Color.fromARGB(255, 22, 129, 206), Color(0xFF818CF8)],
                     begin:  Alignment.centerLeft,
                     end:    Alignment.centerRight,
                   )
