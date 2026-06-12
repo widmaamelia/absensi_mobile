@@ -440,7 +440,7 @@ class _LogbookPageState extends State<LogbookPage> {
                     const SizedBox(height: 16),
                     InkWell(
                       onTap: () async {
-                        final Uri url = Uri.parse('http://192.168.100.172:8000/storage/${logbook['foto_bukti']}');
+                        final Uri url = Uri.parse('http://10.152.19.111:8000/storage/${logbook['foto_bukti']}');
                         if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tidak bisa membuka foto')));

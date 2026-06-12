@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screen/login.dart';
+import 'screen/splash_screen.dart'; // Import file splash screen baru kamu
 
 void main() {
   runApp(const MyApp());
@@ -12,14 +12,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'InternTrack',
+      title: 'Absensi Mobile',
       theme: ThemeData(
-        fontFamily: 'Poppins',
-        scaffoldBackgroundColor: const Color.fromARGB(255, 233, 244, 255),
+        primarySwatch: Colors.blue,
       ),
-
-      // REDIRECT KE LOGIN
-      home: const LoginPage(),
+      home: const SplashScreen(), // 🔥 Set halaman utama ke Splash Screen
     );
   }
 }
