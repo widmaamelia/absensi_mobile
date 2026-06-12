@@ -1,3 +1,5 @@
+import 'package:absensi_mobile/screen/pengajuan_absen.dart';
+
 class ApiConfig {
   // =====================================================
   // ENVIRONMENT
@@ -16,7 +18,7 @@ class ApiConfig {
     }
 
     // WIFI / LARAVEL LOCAL
-    return 'http://172.28.52.111:8000';
+    return 'http://10.152.19.111:8000';
   }
 
   static String get logbook => '$apiUrl/logbook';
@@ -55,6 +57,16 @@ class ApiConfig {
 
   static String get summaryAbsen => '$apiUrl/absen/summary';
 
+  static String get pengajuanAbsen => '$apiUrl/absen/pengajuan';
+  
+  // static String get riwayatPengajuanAbsen => '$apiUrl/absen/pengajuan';
+
+  // Di dalam class ApiConfig, bagian ABSEN:
+static String get riwayatPengajuanAbsen => '$apiUrl/absen/riwayat-pengajuan';
+
+
+
+
   // =====================================================
   // PROFILE
   // =====================================================
@@ -67,6 +79,8 @@ class ApiConfig {
   static String get updateProfile => '$apiUrl/profile'; 
   static String get updatePassword => '$apiUrl/password';
   static String get detailProfil => '$apiUrl/profil/detail';
+  // static String get PengajuanAbsenPage => '$baseUrl/absen/pengajuan';
+  
 
   //     // Gunakan PATCH untuk update profil sesuai standar Laravel Breeze
   // static String get updateProfile =>

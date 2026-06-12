@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
+import 'package:absensi_mobile/screen/pengajuan_absen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -186,9 +187,10 @@ class _DashboardPageState extends State<DashboardPage> {
   // ================================
   @override
   Widget build(BuildContext context) {
-    final today = (absensiHariIni?.tanggal != null && absensiHariIni!.tanggal!.isNotEmpty)
-      ? DateFormat('dd MMMM yyyy').format(DateTime.parse(absensiHariIni!.tanggal!))
-      : DateFormat('dd MMMM yyyy').format(DateTime.now());
+    // final today = (absensiHariIni?.tanggal != null && absensiHariIni!.tanggal!.isNotEmpty)
+    //   ? DateFormat('dd MMMM yyyy').format(DateTime.parse(absensiHariIni!.tanggal!))
+    //   : DateFormat('dd MMMM yyyy').format(DateTime.now());
+    final today = DateFormat('dd MMMM yyyy').format(DateTime.now());
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -577,6 +579,12 @@ class _DashboardPageState extends State<DashboardPage> {
   // ================================
   // BOTTOM NAV (UPDATED: LOGBOOK)
   // ================================
+  // ================================
+  // BOTTOM NAV (UPDATED: TAMBAH PENGAJUAN)
+  // ================================
+  // ================================
+  // BOTTOM NAV (POSISI: SEBELAH HOME)
+  // ================================
   Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(
@@ -594,70 +602,83 @@ class _DashboardPageState extends State<DashboardPage> {
         selectedItemColor: primaryDark,
         unselectedItemColor: Colors.grey.shade400,
         showUnselectedLabels: true,
-        type: BottomNavigationBarType.fixed,
+        type: BottomNavigationBarType.fixed, // Tetap fixed agar 4 menu berjejer rapi
         elevation: 0,
         selectedLabelStyle: const TextStyle(
           fontWeight: FontWeight.bold,
-          fontSize: 12,
+          fontSize: 11,
         ),
         unselectedLabelStyle: const TextStyle(
           fontWeight: FontWeight.w500,
-          fontSize: 12,
+          fontSize: 11,
         ),
-        onTap: (index) {
+        onTap: (index) async {
           setState(() {
             _currentIndex = index;
           });
 
-          // Index 1: Tugas
+          // Index 1: Pengajuan (Sekarang di sebelah Home)
           if (index == 1) {
+            final refresh = await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const PengajuanAbsenPage()),
+            );
+            
+            // Jika pengajuan berhasil (pop membawa nilai true), refresh data dashboard
+            if (refresh == true) {
+              _fetchAbsensiHariIni();
+              _fetchSummary();
+            }
+          }
+          // Index 2: Tugas
+          else if (index == 2) {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const TugasPage()),
             );
           }
-          // Index 2: Logbook
-          else if (index == 2) {
+          // Index 3: Logbook
+          else if (index == 3) {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const LogbookPage()),
-            ); // Kita buat filenya di bawah
+            );
           }
-          // Index 3: Riwayat
-          // else if (index == 3) {
-          //   _goToAbsen();
-          // }
         },
         items: const [
-  BottomNavigationBarItem(
-    icon: Icon(
-      Icons.home_rounded,
-      color: Color.fromARGB(255, 4, 54, 108),
-    ),
-    label: 'Home',
-  ),
-  BottomNavigationBarItem(
-    icon: Icon(
-      Icons.assignment_outlined,
-      color: Color.fromARGB(255, 4, 54, 108),
-    ),
-    label: 'Tugas',
-  ),
-  BottomNavigationBarItem(
-    icon: Icon(
-      Icons.menu_book_rounded,
-      color: Color.fromARGB(255, 4, 54, 108),
-    ),
-    label: 'Logbook',
-  ),
-  // BottomNavigationBarItem(
-  //   icon: Icon(
-  //     Icons.history_rounded,
-  //     color: Color.fromARGB(255, 4, 54, 108),
-  //   ),
-  //   label: 'Riwayat',
-  // ),
-],
+          // Index 0
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.home_rounded,
+              color: Color.fromARGB(255, 4, 54, 108),
+            ),
+            label: 'Home',
+          ),
+          // Index 1 (Menu Baru: Di sebelah Home)
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.draw_rounded, 
+              color: Color.fromARGB(255, 4, 54, 108),
+            ),
+            label: 'Pengajuan',
+          ),
+          // Index 2
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.assignment_outlined,
+              color: Color.fromARGB(255, 4, 54, 108),
+            ),
+            label: 'Tugas',
+          ),
+          // Index 3
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.menu_book_rounded,
+              color: Color.fromARGB(255, 4, 54, 108),
+            ),
+            label: 'Logbook',
+          ),
+        ],
       ),
     );
   }
