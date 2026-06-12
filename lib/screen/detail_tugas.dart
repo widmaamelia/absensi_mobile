@@ -40,16 +40,23 @@ class DetailTugasPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: primaryDark, size: 20),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: primaryDark,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Detail Tugas', 
-          style: TextStyle(color: primaryDark, fontWeight: FontWeight.w800, fontSize: 22),
+          'Daftar Tugas',
+          style: TextStyle(
+            color: primaryDark,
+            fontWeight: FontWeight.w900
+          ),
         ),
         centerTitle: true,
       ),

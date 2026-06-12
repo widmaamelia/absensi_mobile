@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart'; // Jangan lupa install url_launcher
+import 'detail_logbook.dart';
 
 import '../config/api_config.dart';
 
@@ -24,6 +25,10 @@ class _LogbookPageState extends State<LogbookPage> {
   List<dynamic> logbooks = [];
   bool isLoading = true;
 
+  // 🔥 State untuk Rentang Tanggal
+  DateTime? startDate;
+  DateTime? endDate;
+
   @override
   void initState() {
     super.initState();
@@ -36,15 +41,23 @@ class _LogbookPageState extends State<LogbookPage> {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token') ?? '';
 
+      // 🔥 Susun parameter URL berdasarkan tanggal yang dipilih
+      String url = ApiConfig.logbook;
+      if (startDate != null && endDate != null) {
+        String startStr = DateFormat('yyyy-MM-dd').format(startDate!);
+        String endStr = DateFormat('yyyy-MM-dd').format(endDate!);
+        url = '$url?start_date=$startStr&end_date=$endStr';
+      }
+
       final response = await http.get(
-        Uri.parse(ApiConfig.logbook),
+        Uri.parse(url),
         headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
-          logbooks = data['data'] ?? []; 
+          logbooks = data['data']['data'] ?? []; 
         });
       }
     } catch (e) {
@@ -52,6 +65,47 @@ class _LogbookPageState extends State<LogbookPage> {
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
+  }
+
+  // 🔥 Fungsi untuk memunculkan kalender ganda (Date Range Picker)
+  Future<void> _selectDateRange() async {
+    final DateTimeRange? pickedRange = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2023),
+      lastDate: DateTime.now(),
+      initialDateRange: startDate != null && endDate != null 
+          ? DateTimeRange(start: startDate!, end: endDate!) 
+          : null,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: accentBlue, // Header background color
+              onPrimary: Colors.white, // Header text color
+              onSurface: primaryDark, // Body text color
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (pickedRange != null) {
+      setState(() {
+        startDate = pickedRange.start;
+        endDate = pickedRange.end;
+      });
+      _fetchLogbooks(); // Panggil ulang API setelah memilih tanggal
+    }
+  }
+
+  // Fungsi Reset Filter
+  void _resetFilter() {
+    setState(() {
+      startDate = null;
+      endDate = null;
+    });
+    _fetchLogbooks();
   }
 
   void _showAddLogbookModal() {
@@ -69,6 +123,12 @@ class _LogbookPageState extends State<LogbookPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Teks dinamis untuk filter
+    String filterText = "6 Hari Terakhir (Default)";
+    if (startDate != null && endDate != null) {
+      filterText = "${DateFormat('dd MMM').format(startDate!)} - ${DateFormat('dd MMM yyyy').format(endDate!)}";
+    }
+
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
@@ -82,31 +142,92 @@ class _LogbookPageState extends State<LogbookPage> {
         title: Text('Logbook Harian', style: TextStyle(color: primaryDark, fontWeight: FontWeight.w900)),
         centerTitle: true,
       ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator(color: accentBlue))
-          : logbooks.isEmpty
-              ? _buildEmptyState()
-              : RefreshIndicator(
-                  color: accentBlue,
-                  onRefresh: _fetchLogbooks,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                    itemCount: logbooks.length,
-                    itemBuilder: (context, index) {
-                      final delay = 100 + (index * 100);
-                      return _FadeInSlide(
-                        delay: delay,
-                        child: _buildLogbookCard(logbooks[index]),
-                      );
-                    },
+      body: Column(
+        children: [
+          // 🔥 FILTER RENTANG TANGGAL SECTION
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: _selectDateRange,
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: const Color.fromARGB(255, 253, 254, 255),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: accentBlue.withOpacity(0.2), width: 1.5),
+                        boxShadow: [
+                          BoxShadow(color: accentBlue.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.date_range_rounded, color: accentBlue, size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              filterText,
+                              style: TextStyle(color: primaryDark, fontWeight: FontWeight.bold, fontSize: 13),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
+                if (startDate != null) ...[
+                  const SizedBox(width: 10),
+                  InkWell(
+                    onTap: _resetFilter,
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.red.shade200),
+                      ),
+                      child: const Icon(Icons.close_rounded, color: Colors.red, size: 20),
+                    ),
+                  ),
+                ]
+              ],
+            ),
+          ),
+
+          // LIST DATA SECTION
+          Expanded(
+            child: isLoading
+                ? Center(child: CircularProgressIndicator(color: accentBlue))
+                : logbooks.isEmpty
+                    ? _buildEmptyState()
+                    : RefreshIndicator(
+                        color: accentBlue,
+                        onRefresh: _fetchLogbooks,
+                        child: ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                          itemCount: logbooks.length,
+                          itemBuilder: (context, index) {
+                            final delay = 100 + (index * 100);
+                            return _FadeInSlide(
+                              delay: delay,
+                              child: _buildLogbookCard(logbooks[index]),
+                            );
+                          },
+                        ),
+                      ),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddLogbookModal,
         backgroundColor: accentBlue,
         elevation: 6,
-        // shadowColor: accentBlue.withOpacity(0.5),
         icon: const Icon(Icons.add_rounded, color: Colors.white),
         label: const Text("Isi Logbook", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
       ),
@@ -181,70 +302,85 @@ class _LogbookPageState extends State<LogbookPage> {
       }
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 53, 85, 139), // Warna background pilihan Zukira
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: primaryDark.withOpacity(0.1),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          )
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // HEADER CARD (Tanggal & Badge Status)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05), // Aksen transparan
-                border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.1))),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.calendar_today_rounded, size: 14, color: Colors.white70),
-                      const SizedBox(width: 8),
-                      Text(
-                        formattedDate,
-                        style: const TextStyle(
-                          color: Colors.white70, // Teks putih tulang
-                          fontWeight: FontWeight.w800,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.2), // Background badge menyala
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: statusColor.withOpacity(0.3)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+    
+    // 🔥 1. Tambahkan return InkWell di sini
+    return InkWell(
+      onTap: () {
+        // 🔥 2. Navigasi ke halaman detail saat kartu diklik
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DetailLogbookPage(logbook: logbook),
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(24), // Agar efek kliknya melengkung rapi
+      
+      // 🔥 3. Ubah return Container yang lama menjadi child: Container
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 20),
+        decoration: BoxDecoration(
+          color: const Color.fromARGB(255, 53, 85, 139), // Warna background pilihan Zukira
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: primaryDark.withOpacity(0.1),
+              blurRadius: 24,
+              offset: const Offset(0, 10),
+            )
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // HEADER CARD (Tanggal & Badge Status)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05), // Aksen transparan
+                  border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.1))),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
                       children: [
-                        Icon(statusIcon, size: 12, color: statusColor),
-                        const SizedBox(width: 4),
+                        Icon(Icons.calendar_today_rounded, size: 14, color: Colors.white70),
+                        const SizedBox(width: 8),
                         Text(
-                          status.toUpperCase(),
-                          style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                          formattedDate,
+                          style: const TextStyle(
+                            color: Colors.white70, // Teks putih tulang
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                ],
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: statusColor.withOpacity(0.2), // Background badge menyala
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: statusColor.withOpacity(0.3)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(statusIcon, size: 12, color: statusColor),
+                          const SizedBox(width: 4),
+                          Text(
+                            status.toUpperCase(),
+                            style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
 
             // BODY CARD
             Padding(
@@ -304,7 +440,7 @@ class _LogbookPageState extends State<LogbookPage> {
                     const SizedBox(height: 16),
                     InkWell(
                       onTap: () async {
-                        final Uri url = Uri.parse('http://10.152.19.111:8000/storage/${logbook['foto_bukti']}');
+                        final Uri url = Uri.parse('http://192.168.100.172:8000/storage/${logbook['foto_bukti']}');
                         if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tidak bisa membuka foto')));
@@ -336,6 +472,7 @@ class _LogbookPageState extends State<LogbookPage> {
           ],
         ),
       ),
+    )
     );
   }
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http; 
+import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
@@ -19,18 +19,29 @@ class _TugasPageState extends State<TugasPage> {
   // ================================
   // COLORS (Modern Tailwind Light + Dark Card)
   // ================================
-  final Color primaryDark = const Color.fromARGB(255, 17, 32, 68);       
-  final Color cardDark = const Color.fromARGB(255, 46, 81, 138);          
+  final Color primaryDark = const Color.fromARGB(255, 17, 32, 68);
+  final Color cardDark = const Color.fromARGB(255, 46, 81, 138);
   final Color bgColor = const Color.fromARGB(255, 233, 244, 255);
-  final Color accentBlue = const Color(0xFF3B82F6);        
-  final Color accentCyan = const Color(0xFF06B6D4);      
-  final Color textMuted = const Color(0xFF94A3B8);         
+  final Color accentBlue = const Color(0xFF3B82F6);
+  final Color accentCyan = const Color(0xFF06B6D4);
+  final Color textMuted = const Color(0xFF94A3B8);
 
   // ================================
   // STATE (Data Asli dari API nanti masuk ke sini)
   // ================================
+
   List<dynamic> daftarTugas = [];
-  bool isLoading = false; 
+  bool isLoading = false;
+
+  // 🔥 TAMBAHAN 1: Variabel penampung pilihan dropdown
+  String selectedFilter = 'Semua';
+  final List<String> filterOptions = [
+    'Semua',
+    'Belum Dikumpulkan',
+    'Sudah Dikumpulkan',
+    'Belum Dinilai',
+    'Sudah Dinilai',
+  ];
 
   @override
   void initState() {
@@ -43,14 +54,13 @@ class _TugasPageState extends State<TugasPage> {
   // ================================
   Future<void> _kumpulTugas(int taskId) async {
     try {
-      
       FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.any, 
+        type: FileType.any,
       );
 
       if (result != null) {
         File file = File(result.files.single.path!);
-        
+
         final prefs = await SharedPreferences.getInstance();
         final token = prefs.getString('auth_token') ?? '';
 
@@ -61,9 +71,9 @@ class _TugasPageState extends State<TugasPage> {
 
         var request = http.MultipartRequest(
           'POST',
-          Uri.parse('http://10.152.19.111:8000/api/tasks/$taskId/submit'),
+          Uri.parse('http://192.168.100.172:8000/api/tasks/$taskId/submit'),
         );
-        
+
         // Masukkan Token
         request.headers.addAll({
           'Authorization': 'Bearer $token',
@@ -83,14 +93,20 @@ class _TugasPageState extends State<TugasPage> {
         // 5. Cek Hasilnya
         if (response.statusCode == 201) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Tugas berhasil dikumpulkan!'), backgroundColor: Colors.green),
+            const SnackBar(
+              content: Text('Tugas berhasil dikumpulkan!'),
+              backgroundColor: Colors.green,
+            ),
           );
           // Refresh tampilan layar setelah berhasil kumpul
           _fetchTugasAPI();
         } else {
           final errorData = jsonDecode(response.body);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(errorData['message'] ?? 'Gagal mengumpulkan tugas'), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text(errorData['message'] ?? 'Gagal mengumpulkan tugas'),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       }
@@ -98,7 +114,10 @@ class _TugasPageState extends State<TugasPage> {
       debugPrint('Error upload: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Terjadi kesalahan sistem.'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Terjadi kesalahan sistem.'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -108,25 +127,38 @@ class _TugasPageState extends State<TugasPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token') ?? '';
-      
+
       // PERBAIKAN 1: URL menggunakan /api/tasks sesuai route Laravel
       final response = await http.get(
-        Uri.parse('http://10.152.19.111:8000/api/tasks'), 
+        Uri.parse('http://192.168.100.172:8000/api/tasks'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
-        }
+        },
       );
 
       debugPrint("STATUS CODE: ${response.statusCode}");
       debugPrint("BALASAN SERVER: ${response.body}");
+
+      // if (response.statusCode == 200) {
+      //   final jsonData = jsonDecode(response.body);
+      //   // Pastikan API membalas dengan 'success' == true
+      //   if (jsonData['success'] == true) {
+      //     setState(() {
+      //       daftarTugas = jsonData['data'];
+      //     });
+      //   }
+      // }
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
         // Pastikan API membalas dengan 'success' == true
         if (jsonData['success'] == true) {
           setState(() {
-            daftarTugas = jsonData['data']; 
+            daftarTugas = jsonData['data'];
+
+            // 🔥 TAMBAHAN 2: Urutkan dari yang paling baru (ID terbesar ke terkecil)
+            daftarTugas.sort((a, b) => b['id'].compareTo(a['id']));
           });
         }
       }
@@ -139,23 +171,41 @@ class _TugasPageState extends State<TugasPage> {
 
   @override
   Widget build(BuildContext context) {
+    // 🔥 TAMBAHAN 3: Logika penyaringan pintar (Filter)
+    List<dynamic> filteredTugas = daftarTugas.where((tugas) {
+      bool isSubmitted = tugas['is_submitted'] == true;
+      bool isDinilai =
+          tugas['submission'] != null &&
+          tugas['submission']['nilai'] != null &&
+          tugas['submission']['nilai'].toString().isNotEmpty;
+
+      if (selectedFilter == 'Sudah Dikumpulkan') return isSubmitted;
+      if (selectedFilter == 'Belum Dikumpulkan') return !isSubmitted;
+      if (selectedFilter == 'Belum Dinilai') return isSubmitted && !isDinilai;
+      if (selectedFilter == 'Sudah Dinilai') return isDinilai;
+
+      return true; // Jika memilih 'Semua'
+    }).toList();
+
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        backgroundColor: bgColor,
+        backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: primaryDark, size: 20),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: primaryDark,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Daftar Tugas',
           style: TextStyle(
             color: primaryDark,
-            fontWeight: FontWeight.w800,
-            fontSize: 22,
-            letterSpacing: -0.5,
+            fontWeight: FontWeight.w900
           ),
         ),
         centerTitle: true,
@@ -172,22 +222,79 @@ class _TugasPageState extends State<TugasPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Tugas Terkirim',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w700,
-                        color: primaryDark,
-                        letterSpacing: 1.0,
+                    // Text(
+                    //   'Tugas Terkirim',
+                    //   style: TextStyle(
+                    //     fontSize: 26,
+                    //     fontWeight: FontWeight.w700,
+                    //     color: primaryDark,
+                    //     letterSpacing: 1.0,
+                    //   ),
+                    // ),
+                    // const SizedBox(height: 6),
+                    // Text(
+                    //   'Kerjakan dan kumpulkan tugas dari mentor tepat waktu ya.',
+                    //   style: TextStyle(
+                    //     color: const Color(0xFF64748B),
+                    //     fontSize: 14,
+                    //     fontWeight: FontWeight.w500,
+                    //   ),
+                    // ),
+                    // const SizedBox(height: 16),
+
+                    // 🔥 TAMBAHAN 4A: Kotak Dropdown Filter Elegan
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4,
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Kerjakan dan kumpulkan tugas dari mentor tepat waktu ya.',
-                      style: TextStyle(
-                        color: const Color(0xFF64748B),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                      decoration: BoxDecoration(
+                        color: const Color.fromARGB(255, 253, 254, 255),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: const Color.fromARGB(58, 70, 93, 164),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: accentBlue.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: selectedFilter,
+                          isExpanded: true,
+                          icon: Icon(
+                            Icons.filter_list_rounded,
+                            color: accentBlue,
+                          ),
+                          style: TextStyle(
+                            color: primaryDark,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                          dropdownColor: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          onChanged: (String? newValue) {
+                            if (newValue != null) {
+                              setState(() {
+                                selectedFilter =
+                                    newValue; // Refresh layar saat filter diganti
+                              });
+                            }
+                          },
+                          items: filterOptions.map<DropdownMenuItem<String>>((
+                            String value,
+                          ) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
                   ],
@@ -197,27 +304,33 @@ class _TugasPageState extends State<TugasPage> {
 
             // LIST TUGAS SECTION
             Expanded(
-              child: isLoading 
-                ? Center(child: CircularProgressIndicator(color: accentBlue))
-                : daftarTugas.isEmpty 
-                    ? _buildEmptyState() // Tampil jika belum ada data dari API
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: daftarTugas.length,
-                        itemBuilder: (context, index) {
-                          final tugas = daftarTugas[index];
-                          final delay = 100 + (index * 100); 
-
-                          return _FadeInSlide(
-                            delay: delay,
-                            child: Padding(
-                              padding: const EdgeInsets.only(bottom: 20),
-                              child: _buildTaskCard(tugas),
-                            ),
-                          );
-                        },
+              child: isLoading
+                  ? Center(child: CircularProgressIndicator(color: accentBlue))
+                  : filteredTugas
+                        .isEmpty // 🔥 TAMBAHAN 4B: Ubah daftarTugas menjadi filteredTugas
+                  ? _buildEmptyState()
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 10,
                       ),
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: filteredTugas
+                          .length, // 🔥 Ubah daftarTugas menjadi filteredTugas
+                      itemBuilder: (context, index) {
+                        final tugas =
+                            filteredTugas[index]; // 🔥 Ubah daftarTugas menjadi filteredTugas
+                        final delay = 100 + (index * 100);
+
+                        return _FadeInSlide(
+                          delay: delay,
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 20),
+                            child: _buildTaskCard(tugas),
+                          ),
+                        );
+                      },
+                    ),
             ),
           ],
         ),
@@ -241,15 +354,27 @@ class _TugasPageState extends State<TugasPage> {
                 color: Colors.white,
                 shape: BoxShape.circle,
                 boxShadow: [
-                  BoxShadow(color: accentBlue.withValues(alpha: 0.1), blurRadius: 30, offset: const Offset(0, 10)),
+                  BoxShadow(
+                    color: accentBlue.withValues(alpha: 0.1),
+                    blurRadius: 30,
+                    offset: const Offset(0, 10),
+                  ),
                 ],
               ),
-              child: Icon(Icons.assignment_turned_in_rounded, size: 60, color: accentBlue.withValues(alpha: 0.5)),
+              child: Icon(
+                Icons.assignment_turned_in_rounded,
+                size: 60,
+                color: accentBlue.withValues(alpha: 0.5),
+              ),
             ),
             const SizedBox(height: 24),
             Text(
               'Belum Ada Tugas',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: primaryDark),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: primaryDark,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -272,21 +397,21 @@ class _TugasPageState extends State<TugasPage> {
   Widget _buildTaskCard(dynamic tugas) {
     // 1. Cek apakah anak magang sudah mengumpulkan
     // bool isSubmitted = tugas['is_submitted'] == true;
-    
+
     // // 2. Cek apakah mentor sudah menilai
     // // 🔥 PERHATIAN: Saya menggunakan asumsi bahwa Laravel mengirimkan data 'nilai'.
-    // bool isDinilai = tugas['nilai'] != null && tugas['nilai'].toString().isNotEmpty; 
+    // bool isDinilai = tugas['nilai'] != null && tugas['nilai'].toString().isNotEmpty;
 
     // bool adaMateri = tugas['file_materi'] != null;
 
-
-
     bool isSubmitted = tugas['is_submitted'] == true;
-    
+
     // 2. 🔥 PERBAIKAN: Masuk ke dalam 'submission' dulu untuk mencari nilai!
     bool isDinilai = false;
     if (tugas['submission'] != null) {
-      isDinilai = tugas['submission']['nilai'] != null && tugas['submission']['nilai'].toString().isNotEmpty; 
+      isDinilai =
+          tugas['submission']['nilai'] != null &&
+          tugas['submission']['nilai'].toString().isNotEmpty;
     }
 
     bool adaMateri = tugas['file_materi'] != null;
@@ -296,7 +421,7 @@ class _TugasPageState extends State<TugasPage> {
     if (tugas['deadline'] != null) {
       try {
         // 🔥 Tambahkan .toLocal() agar jamnya kembali ke waktu WIB
-        DateTime parsedDate = DateTime.parse(tugas['deadline']).toLocal(); 
+        DateTime parsedDate = DateTime.parse(tugas['deadline']).toLocal();
         formattedDeadline = DateFormat('dd MMM yyyy, HH:mm').format(parsedDate);
       } catch (e) {
         formattedDeadline = tugas['deadline'];
@@ -304,19 +429,29 @@ class _TugasPageState extends State<TugasPage> {
     }
 
     // --- LOGIC WARNA & TEKS BERDASARKAN 3 STATUS ---
-    String badgeText = isDinilai ? 'Selesai' : (isSubmitted ? 'Menunggu' : 'Belum');
-    Color badgeColor = isDinilai 
+    String badgeText = isDinilai
+        ? 'Selesai'
+        : (isSubmitted ? 'Menunggu' : 'Belum');
+    Color badgeColor = isDinilai
         ? const Color(0xFF10B981) // Hijau jika dinilai
-        : (isSubmitted ? accentBlue : const Color(0xFFF59E0B)); // Biru jika nunggu, Kuning jika belum
-        
-    String btnText = isDinilai ? 'Dinilai' : (isSubmitted ? 'Terkumpul' : 'Kumpul');
-    bool isButtonDisabled = isSubmitted || isDinilai; // Tombol mati kalau sudah dikumpul atau dinilai
+        : (isSubmitted
+              ? accentBlue
+              : const Color(0xFFF59E0B)); // Biru jika nunggu, Kuning jika belum
 
-    return InkWell( 
+    String btnText = isDinilai
+        ? 'Dinilai'
+        : (isSubmitted ? 'Terkumpul' : 'Kumpul');
+    bool isButtonDisabled =
+        isSubmitted ||
+        isDinilai; // Tombol mati kalau sudah dikumpul atau dinilai
+
+    return InkWell(
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => DetailTugasPage(tugas: tugas)),
+          MaterialPageRoute(
+            builder: (context) => DetailTugasPage(tugas: tugas),
+          ),
         );
       },
       borderRadius: BorderRadius.circular(20),
@@ -331,7 +466,7 @@ class _TugasPageState extends State<TugasPage> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: primaryDark.withValues(alpha: 0.15), 
+              color: primaryDark.withValues(alpha: 0.15),
               blurRadius: 15,
               offset: const Offset(0, 8),
             ),
@@ -355,13 +490,17 @@ class _TugasPageState extends State<TugasPage> {
                     ),
                   ),
                   child: Icon(
-                    isDinilai ? Icons.task_alt_rounded : (isSubmitted ? Icons.hourglass_top_rounded : Icons.code_rounded),
+                    isDinilai
+                        ? Icons.task_alt_rounded
+                        : (isSubmitted
+                              ? Icons.hourglass_top_rounded
+                              : Icons.code_rounded),
                     color: badgeColor,
                     size: 20,
                   ),
                 ),
                 const SizedBox(width: 14),
-                
+
                 // TITLE & DESC
                 Expanded(
                   child: Column(
@@ -369,7 +508,7 @@ class _TugasPageState extends State<TugasPage> {
                     children: [
                       Text(
                         tugas['judul_tugas'] ?? 'Tanpa Judul',
-                        maxLines: 1, 
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 16,
@@ -381,7 +520,7 @@ class _TugasPageState extends State<TugasPage> {
                       const SizedBox(height: 4),
                       Text(
                         tugas['deskripsi_tugas'] ?? 'Tidak ada deskripsi',
-                        maxLines: 1, 
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 12,
@@ -393,10 +532,13 @@ class _TugasPageState extends State<TugasPage> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                
+
                 // STATUS BADGE
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: badgeColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
@@ -416,9 +558,9 @@ class _TugasPageState extends State<TugasPage> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // BARIS 2: Deadline, Materi & Tombol Kumpul
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -434,10 +576,14 @@ class _TugasPageState extends State<TugasPage> {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.timer_outlined, size: 14, color: textMuted),
+                          Icon(
+                            Icons.timer_outlined,
+                            size: 14,
+                            color: textMuted,
+                          ),
                           const SizedBox(width: 4),
                           Text(
-                            formattedDeadline, 
+                            formattedDeadline,
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -446,24 +592,37 @@ class _TugasPageState extends State<TugasPage> {
                           ),
                         ],
                       ),
-                      
+
                       // TOMBOL MATERI
                       if (adaMateri)
                         InkWell(
                           onTap: () async {
                             final String namaFile = tugas['file_materi'];
-                            final Uri url = Uri.parse('http://10.152.19.111:8000/storage/$namaFile');
-                            
-                            if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+                            final Uri url = Uri.parse(
+                              'http://192.168.100.172:8000/storage/$namaFile',
+                            );
+
+                            if (!await launchUrl(
+                              url,
+                              mode: LaunchMode.externalApplication,
+                            )) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Tidak bisa membuka file materi')),
+                                const SnackBar(
+                                  content: Text(
+                                    'Tidak bisa membuka file materi',
+                                  ),
+                                ),
                               );
                             }
                           },
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.download_rounded, size: 14, color: accentCyan),
+                              Icon(
+                                Icons.download_rounded,
+                                size: 14,
+                                color: accentCyan,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 'Materi',
@@ -479,7 +638,7 @@ class _TugasPageState extends State<TugasPage> {
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(width: 8),
 
                 // TOMBOL KUMPUL
@@ -487,21 +646,28 @@ class _TugasPageState extends State<TugasPage> {
                   height: 38,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: isButtonDisabled 
-                          ? [Colors.white.withValues(alpha: 0.1), Colors.white.withValues(alpha: 0.05)]
+                      colors: isButtonDisabled
+                          ? [
+                              Colors.white.withValues(alpha: 0.1),
+                              Colors.white.withValues(alpha: 0.05),
+                            ]
                           : [accentBlue, accentCyan],
                     ),
                     borderRadius: BorderRadius.circular(10),
-                    boxShadow: isButtonDisabled ? [] : [
-                      BoxShadow(
-                        color: accentBlue.withValues(alpha: 0.4),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      )
-                    ],
+                    boxShadow: isButtonDisabled
+                        ? []
+                        : [
+                            BoxShadow(
+                              color: accentBlue.withValues(alpha: 0.4),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
                   ),
                   child: ElevatedButton(
-                    onPressed: isButtonDisabled ? null : () => _kumpulTugas(tugas['id']),
+                    onPressed: isButtonDisabled
+                        ? null
+                        : () => _kumpulTugas(tugas['id']),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
                       disabledBackgroundColor: Colors.transparent,
@@ -547,7 +713,7 @@ class _FadeInSlide extends StatelessWidget {
       future: Future.delayed(Duration(milliseconds: delay)),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox.shrink(); 
+          return const SizedBox.shrink();
         }
         return TweenAnimationBuilder<double>(
           tween: Tween(begin: 0.0, end: 1.0),
