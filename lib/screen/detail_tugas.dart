@@ -52,7 +52,7 @@ class DetailTugasPage extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Daftar Tugas',
+          'Detail Tugas',
           style: TextStyle(
             color: primaryDark,
             fontWeight: FontWeight.w900
