@@ -171,7 +171,7 @@ class DetailLogbookPage extends StatelessWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(16),
                       child: Image.network(
-                        'http://10.152.19.111:8000/storage/${logbook['foto_bukti']}',
+                        'http://10.162.248.203:8000/storage/${logbook['foto_bukti']}',
                         width: double.infinity,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
@@ -196,7 +196,7 @@ class DetailLogbookPage extends StatelessWidget {
                       width: double.infinity,
                       child: OutlinedButton.icon(
                         onPressed: () async {
-                          final Uri url = Uri.parse('http://10.152.19.111:8000/storage/${logbook['foto_bukti']}');
+                          final Uri url = Uri.parse('http://10.162.248.203:8000/storage/${logbook['foto_bukti']}');
                           if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tidak bisa membuka tautan foto')));
