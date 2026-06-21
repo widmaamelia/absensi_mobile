@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/api_config.dart';
 import 'dashboard.dart';
+import 'splash_screen.dart'; // 🔥 1. IMPOR file splash screen kamu di sini
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -31,13 +32,13 @@ class _LoginPageState extends State<LoginPage> {
   // =========================================
   // COLORS (Modern Tailwind Light Theme + Navy)
   // =========================================
-  final Color bgLight = const Color.fromARGB(255, 236, 244, 253);     // Slate 50 (Background Sangat Terang)
-  final Color textDark = const Color(0xFF0F172A);    // Slate 900 (Navy Gelap untuk Teks)
-  final Color textMuted = const Color(0xFF64748B);   // Slate 500 (Abu-abu kebiruan)
+  final Color bgLight = const Color.fromARGB(255, 236, 244, 253);     // Slate 50
+  final Color textDark = const Color(0xFF0F172A);    // Slate 900
+  final Color textMuted = const Color(0xFF64748B);   // Slate 500
   
-  final Color primaryBlue = const Color(0xFF2563EB); // Blue 600 (Biru Utama)
-  final Color navyDark = const Color(0xFF1E293B);    // Slate 800 (Biru Dongker)
-  final Color inputBg = const Color(0xFFF1F5F9);     // Slate 100 (Background Input)
+  final Color primaryBlue = const Color(0xFF2563EB); // Blue 600
+  final Color navyDark = const Color(0xFF1E293B);    // Slate 800
+  final Color inputBg = const Color(0xFFF1F5F9);     // Slate 100
 
   // =========================================
   // LOGIN FUNCTION (TIDAK DISENTUH SAMA SEKALI!)
@@ -62,58 +63,32 @@ class _LoginPageState extends State<LoginPage> {
 
       if (!mounted) return;
 
-      // =========================================
-      // LOGIN SUCCESS
-      // =========================================
       if (response.statusCode == 200) {
         final token = data['token'] ?? '';
         final prefs = await SharedPreferences.getInstance();
 
-        // SAVE TOKEN
-        await prefs.setString(
-          'auth_token',
-          token,
-        );
+        await prefs.setString('auth_token', token);
 
-        // SAVE USER DATA (NAMA & EMAIL)
         if (data['user'] != null) {
-          await prefs.setString(
-            'user_name',
-            data['user']['name'] ?? '',
-          );
-          
-          // 🔥 TAMBAHKAN BARIS INI UNTUK MENYIMPAN EMAIL
-          await prefs.setString(
-            'user_email',
-            data['user']['email'] ?? '',
-          );
+          await prefs.setString('user_name', data['user']['name'] ?? '');
+          await prefs.setString('user_email', data['user']['email'] ?? '');
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              data['message'] ?? 'Login Berhasil',
-            ),
+            content: Text(data['message'] ?? 'Login Berhasil'),
             backgroundColor: Colors.green,
           ),
         );
 
-        // NAVIGATE TO DASHBOARD
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (_) => const DashboardPage(),
-          ),
+          MaterialPageRoute(builder: (_) => const DashboardPage()),
         );
       } else {
-        // =========================================
-        // LOGIN FAILED
-        // =========================================
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              data['message'] ?? 'Login gagal.',
-            ),
+            content: Text(data['message'] ?? 'Login gagal.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -122,9 +97,7 @@ class _LoginPageState extends State<LoginPage> {
       debugPrint('LOGIN ERROR: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Error: $e',
-          ),
+          content: Text('Error: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -146,23 +119,73 @@ class _LoginPageState extends State<LoginPage> {
       backgroundColor: bgLight,
       body: Stack(
         children: [
-          // =========================================
-          // BACKGROUND BLOB EFFECTS (Sangat Halus)
-          // =========================================
+          // BACKGROUND BLOB EFFECTS
           Positioned(
             top: -100,
             right: -50,
-            child: _buildBlob(350, const Color(0xFFDBEAFE).withValues(alpha: 0.6)), // Blue 100
+            child: _buildBlob(350, const Color(0xFFDBEAFE).withValues(alpha: 0.6)),
           ),
           Positioned(
             bottom: -100,
             left: -80,
-            child: _buildBlob(400, const Color(0xFFE0E7FF).withValues(alpha: 0.6)), // Indigo 100
+            child: _buildBlob(400, const Color(0xFFE0E7FF).withValues(alpha: 0.6)),
           ),
 
-          // =========================================
+          // 🔥 2. TOMBOL KEMBALI KE SPLASH SCREEN (Melayang Elegan)
+          Positioned(
+            top: 16,
+            left: 16,
+            child: SafeArea(
+              child: _FadeInSlide(
+                delay: 100,
+                child: GestureDetector(
+                  onTap: () {
+                    // Pindah balik ke Splash Screen dengan transisi halus custom
+                    Navigator.pushReplacement(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) => const SplashScreen(),
+                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                          var fadeTween = Tween<double>(begin: 0.0, end: 1.0).animate(
+                            CurvedAnimation(parent: animation, curve: Curves.easeInOut),
+                          );
+                          var scaleTween = Tween<double>(begin: 1.04, end: 1.0).animate(
+                            CurvedAnimation(parent: animation, curve: Curves.easeInOut),
+                          );
+                          return FadeTransition(
+                            opacity: fadeTween,
+                            child: ScaleTransition(scale: scaleTween, child: child),
+                          );
+                        },
+                        transitionDuration: const Duration(milliseconds: 600),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: textDark.withValues(alpha: 0.05),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: primaryBlue,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
           // CONTENT
-          // =========================================
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -170,9 +193,9 @@ class _LoginPageState extends State<LoginPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // =========================================
-                    // LOGO (Animated)
-                    // =========================================
+                    const SizedBox(height: 40), // Jaga jarak spasi agar tidak tertutup tombol back
+                    
+                    // LOGO
                     _FadeInSlide(
                       delay: 0,
                       child: Hero(
@@ -181,7 +204,7 @@ class _LoginPageState extends State<LoginPage> {
                           height: 110,
                           width: 110,
                           decoration: BoxDecoration(
-                            color: Colors.blue,
+                            color: Colors.white, // Diubah ke putih agar menyatu rapi dengan logo Mediatama
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
@@ -192,9 +215,9 @@ class _LoginPageState extends State<LoginPage> {
                             ],
                           ),
                           child: Padding(
-                            padding: const EdgeInsets.all(20),
+                            padding: const EdgeInsets.all(18),
                             child: Image.asset(
-                              'assets/ogo.jpg', // Pastikan nama aset benar
+                              'assets/Logo Mediatama.png', // 🔥 Sekalian disesuaikan ke logo Mediatama kamu ya
                               fit: BoxFit.contain,
                             ),
                           ),
@@ -203,9 +226,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 28),
 
-                    // =========================================
-                    // TITLE (Animated)
-                    // =========================================
+                    // TITLE
                     _FadeInSlide(
                       delay: 100,
                       child: Column(
@@ -233,9 +254,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 40),
 
-                    // =========================================
-                    // LOGIN CARD (Animated)
-                    // =========================================
+                    // LOGIN CARD
                     _FadeInSlide(
                       delay: 200,
                       child: Container(
@@ -246,7 +265,7 @@ class _LoginPageState extends State<LoginPage> {
                           borderRadius: BorderRadius.circular(32),
                           boxShadow: [
                             BoxShadow(
-                              color: textDark.withValues(alpha: 0.06), // Soft modern shadow
+                              color: textDark.withValues(alpha: 0.06),
                               blurRadius: 40,
                               offset: const Offset(0, 15),
                             ),
@@ -278,27 +297,6 @@ class _LoginPageState extends State<LoginPage> {
                                 });
                               },
                             ),
-
-                            // Align(
-                            //   alignment: Alignment.centerRight,
-                            //   child: 
-                            //   TextButton(
-                            //     onPressed: () {},
-                            //     style: 
-                            //     TextButton.styleFrom(
-                            //       padding: const EdgeInsets.symmetric(vertical: 6),
-                            //     ),
-                            //     child: 
-                            //     Text(
-                            //       '',
-                            //       style: TextStyle(
-                            //         color: primaryBlue,
-                            //         fontWeight: FontWeight.bold,
-                            //         fontSize: 3,
-                            //       ),
-                            //     ),
-                            //   ),
-                            // ),
                             const SizedBox(height: 35),
 
                             // BUTTON LOGIN
@@ -309,13 +307,11 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 40),
 
-                    // =========================================
-                    // FOOTER (Animated)
-                    // =========================================
+                    // FOOTER
                     _FadeInSlide(
                       delay: 300,
                       child: Text(
-                        '© 2024 Mediatama System • v1.0',
+                        '© 2026 Mediatama System • v1.0',
                         style: TextStyle(
                           color: textMuted.withValues(alpha: 0.6),
                           fontSize: 12,
@@ -372,7 +368,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // =========================================
-  // CUSTOM FIELD (Modern Clean UI)
+  // CUSTOM FIELD
   // =========================================
   Widget _buildCustomField({
     required TextEditingController controller,
@@ -386,7 +382,7 @@ class _LoginPageState extends State<LoginPage> {
       decoration: BoxDecoration(
         color: inputBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white, width: 2), // Memberikan efek timbul sedikit
+        border: Border.all(color: Colors.white, width: 2),
       ),
       child: TextField(
         controller: controller,
@@ -435,7 +431,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // =========================================
-  // BUTTON LOGIN (Gradient Primary to Navy)
+  // BUTTON LOGIN
   // =========================================
   Widget _buildGradientButton() {
     return Container(
@@ -444,7 +440,7 @@ class _LoginPageState extends State<LoginPage> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
         gradient: LinearGradient(
-          colors: [primaryBlue, navyDark], // Kombinasi Terang ke Biru Dongker Gelap
+          colors: [primaryBlue, navyDark],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -504,7 +500,7 @@ class _FadeInSlide extends StatelessWidget {
       future: Future.delayed(Duration(milliseconds: delay)),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox.shrink(); // Menyembunyikan widget sebelum animasi mulai
+          return const SizedBox.shrink();
         }
         return TweenAnimationBuilder<double>(
           tween: Tween(begin: 0.0, end: 1.0),
@@ -514,7 +510,7 @@ class _FadeInSlide extends StatelessWidget {
             return Opacity(
               opacity: value,
               child: Transform.translate(
-                offset: Offset(0, 40 * (1 - value)), // Slide up 40 pixel
+                offset: Offset(0, 40 * (1 - value)),
                 child: child,
               ),
             );
